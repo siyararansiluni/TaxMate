@@ -8,7 +8,7 @@ TaxMate is a proposed digital platform designed to simplify tax-related activiti
 
 ---
 
-## 🖥️ TaxMate Landing Page Design
+## 🖥️ TaxMate System
 
 The following image illustrates the proposed landing page design of the TaxMate system.
 
@@ -42,17 +42,6 @@ The following image illustrates the proposed landing page design of the TaxMate 
 | Tax Advisor | Manages professional profiles and accesses authorized taxpayer information. |
 | Administrator | Manages accounts, advisor approvals, and tax rules. |
 
-## 📂 Repository Structure
-
-```text
-TaxMate/
-├── frontend/
-├── backend/
-├── docs/
-│   └── design/
-│       └── landing-page.png
-└── README.md
-```
 
 ## 🚀 Development Status
 
