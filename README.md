@@ -10,11 +10,11 @@ TaxMate is a proposed digital platform designed to simplify tax-related activiti
 
 ## 🖥️ TaxMate System
 
-The following image illustrates the proposed landing page design of the TaxMate system.
+
 
 ![TaxMate Landing Page](docs/Design/landing-page.png)
 
-*Figure 1: Proposed TaxMate Landing Page Design*
+
 ---
 
 ## 🎯 Project Objectives
