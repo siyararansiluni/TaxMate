@@ -1,6 +1,36 @@
 
 
+import { useState } from "react";
+
 function TaxCalculator() {
+  const [income, setIncome] = useState({
+  employee: "",
+  business: "",
+  investment: "",
+  other: "",
+});
+
+const totalIncome =
+  Number(income.employee || 0) +
+  Number(income.business || 0) +
+  Number(income.investment || 0) +
+  Number(income.other || 0);
+
+  const [deductions, setDeductions] = useState({
+  donations: "",
+  insurance: "",
+  medical: "",
+  other: "",
+});
+const totalDeductions =
+  Number(deductions.donations || 0) +
+  Number(deductions.insurance || 0) +
+  Number(deductions.medical || 0) +
+  Number(deductions.other || 0);
+
+const taxableIncome = Math.max(0, totalIncome - totalDeductions);
+const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
+
   return (
     <main className="min-h-screen bg-white px-5 py-6 sm:px-7">
       <div className="mx-auto max-w-6xl">
@@ -52,11 +82,11 @@ function TaxCalculator() {
 
             <div className="space-y-3">
               {[
-                "Employee Income",
-                "Business Income",
-                "Investment Income",
-                "Other Income",
-              ].map((label) => (
+               { label: "Employee Income", key: "employee" as const },
+               { label: "Business Income", key: "business" as const },
+               { label: "Investment Income", key: "investment" as const },
+               { label: "Other Income", key: "other" as const },
+               ].map(({ label, key }) => (
                 <div
                   key={label}
                   className="grid grid-cols-2 items-center gap-3 text-xs text-slate-600"
@@ -67,7 +97,19 @@ function TaxCalculator() {
                     <span className="bg-slate-100 px-2 py-2.5 text-slate-500">
                       LKR
                     </span>
-                    <div className="flex-1 bg-white px-2 py-2.5" />
+                  <input
+                   type="number"
+                   min="0"
+                   placeholder="0.00"
+                   value={income[key]}
+                   onChange={(e) =>
+                   setIncome((prev) => ({
+                   ...prev,
+                  [key]: e.target.value,
+                 }))
+               }
+                className="w-full min-w-0 flex-1 bg-white px-2 py-2.5 text-right text-xs text-slate-700 outline-none focus:bg-blue-50"
+              />
                   </div>
                 </div>
               ))}
@@ -80,34 +122,55 @@ function TaxCalculator() {
             </div>
 
             <div className="space-y-3">
-              {[
-                "Qualifying Donations",
-                "Life Insurance premium",
-                "Medical Expenses",
-                "Other Deductions",
-              ].map((label) => (
-                <div
-                  key={label}
-                  className="grid grid-cols-2 items-center gap-3 text-xs text-slate-600"
-                >
-                  <span>{label}</span>
+              
+            {[
+              { label: "Qualifying Donations", key: "donations" as const },
+              { label: "Life Insurance premium", key: "insurance" as const },
+              { label: "Medical Expenses", key: "medical" as const },
+              { label: "Other Deductions", key: "other" as const },
+             ].map(({ label, key }) => (
+            <div
+             key={key}
+             className="grid grid-cols-2 items-center gap-3 text-xs text-slate-600"
+             >
+    <span>{label}</span>
 
-                  <div className="flex overflow-hidden rounded-lg border border-slate-200">
-                    <span className="bg-slate-100 px-2 py-2.5 text-slate-500">
-                      LKR
-                    </span>
-                    <div className="flex-1 bg-white px-2 py-2.5" />
-                  </div>
-                </div>
-              ))}
+    <div className="flex overflow-hidden rounded-lg border border-slate-200">
+      <span className="bg-slate-100 px-2 py-2.5 text-slate-500">
+        LKR
+      </span>
+
+      <input
+        type="number"
+        min="0"
+        placeholder="0.00"
+        value={deductions[key]}
+        onChange={(e) =>
+          setDeductions((prev) => ({
+            ...prev,
+            [key]: e.target.value,
+          }))
+        }
+        className="w-full min-w-0 flex-1 bg-white px-2 py-2.5 text-right text-xs text-slate-700 outline-none focus:bg-blue-50"
+      />
+    </div>
+  </div>
+))}
+
+              
             </div>
 
-            <button
-              type="button"
-              className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Calculate estimated tax
-            </button>
+          <button
+            type="button"
+            onClick={() => {
+    // Temporary demo calculation only
+    const tax = taxableIncome * 0.1;
+    setEstimatedTax(tax);
+           }}
+           className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+           Calculate estimated tax
+          </button>
 
             <p className="mt-3 text-center text-xs text-slate-500">
               This is an illustrative estimate, not an official IRD assessment.
@@ -122,21 +185,35 @@ function TaxCalculator() {
                 Estimated tax summary
               </h2>
 
-              {[
-                "Gross income",
-                "Deductions",
-                "Taxable income",
-              ].map((label) => (
-                <div
-                  key={label}
-                  className="flex items-center justify-between gap-3 border-b border-slate-100 py-4 text-xs"
-                >
-                  <span className="text-slate-500">{label}</span>
-                  <span className="font-semibold text-slate-700">
-                    LKR 0
-                  </span>
-                </div>
-              ))}
+            
+{[
+  "Gross income",
+  "Deductions",
+  "Taxable income",
+].map((label) => {
+  const amount =
+    label === "Gross income"
+      ? totalIncome
+      : label === "Deductions"
+        ? totalDeductions
+        : taxableIncome;
+
+  return (
+    <div
+      key={label}
+      className="flex items-center justify-between gap-3 border-b border-slate-100 py-3"
+    >
+      <span className="text-slate-500">{label}</span>
+      <span className="font-semibold text-slate-700">
+        {`LKR ${amount.toLocaleString("en-LK", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`}
+      </span>
+    </div>
+  );
+})}
+
 
               <div className="mt-4 rounded-lg bg-blue-50 p-5">
                 <p className="text-xs text-slate-500">
@@ -144,7 +221,12 @@ function TaxCalculator() {
                 </p>
 
                 <p className="mt-4 text-lg font-bold text-blue-600">
-                  Calculated on request
+                {estimatedTax === null
+                ? "Calculated on request"
+                : `LKR ${estimatedTax.toLocaleString("en-LK", {
+                 minimumFractionDigits: 2,
+                 maximumFractionDigits: 2,
+                })}`}
                 </p>
               </div>
 
