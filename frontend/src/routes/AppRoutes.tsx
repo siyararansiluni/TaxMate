@@ -1,6 +1,7 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 
 import Home from '../pages/Home'
+import Login from '../pages/Login'
 import TaxPayerDashboard from '../pages/TaxPayerDashboard'
 import IncomeManagement from '../pages/IncomeManagement'
 import ExpensesDeductions from '../pages/ExpensesDeductions'
@@ -10,7 +11,9 @@ import TaxReturns from '../pages/TaxReturns'
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/dashboard" element={<TaxPayerDashboard />} />
       <Route path="/income" element={<IncomeManagement />} />
       <Route path="/expenses" element={<ExpensesDeductions />} />
