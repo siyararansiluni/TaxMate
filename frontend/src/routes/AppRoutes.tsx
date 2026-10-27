@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+
+import { Navigate, Route, Routes } from 'react-router-dom'
 
 import Home from '../pages/Home'
 import TaxPayerDashboard from '../pages/TaxPayerDashboard'
@@ -7,7 +8,7 @@ import ExpensesDeductions from '../pages/ExpensesDeductions'
 import TaxCalculator from '../pages/TaxCalculator'
 import TaxReturns from '../pages/TaxReturns'
 
-function AppRoutes() {
+export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -16,8 +17,7 @@ function AppRoutes() {
       <Route path="/expenses" element={<ExpensesDeductions />} />
       <Route path="/tax-calculator" element={<TaxCalculator />} />
       <Route path="/tax-returns" element={<TaxReturns />} />
+      <Route path="*" element={<Navigate to="/income" replace />} />
     </Routes>
   )
 }
-
-export default AppRoutes
