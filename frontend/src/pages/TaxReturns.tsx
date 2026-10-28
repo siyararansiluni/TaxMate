@@ -1,13 +1,750 @@
-function TaxReturns() {
-  return (
-    <div className="bg-blue-100 p-6 rounded-lg">
-      <h2 className="text-2xl font-bold text-blue-700">
-        Tax Returns
-      </h2>
 
-      <p className="mt-2 text-gray-600">
-        Welcome to TaxMate Tax Returns
+import { useState } from "react";
+
+import { jsPDF } from "jspdf";
+
+type ReturnStatus = "Draft" | "Ready for Filing" | "Validation Failed";
+type ViewMode = "list" | "prepare" | "review" | "pdf-preview";
+interface TaxReturnData {
+  year: string;
+  reference: string;
+  status: ReturnStatus;
+  updated: string;
+  income: number;
+  deductions: number;
+  estimatedTax: number;
+}
+
+const initialReturns: TaxReturnData[] = [
+  {
+    year: "2025 / 2026",
+    reference: "RET-2026-001",
+    status: "Draft",
+    updated: "18 Oct 2026",
+    income: 2400000,
+    deductions: 300000,
+    estimatedTax: 120000,
+  },
+  {
+    year: "2024 / 2025",
+    reference: "RET-2025-002",
+    status: "Ready for Filing",
+    updated: "12 Sep 2025",
+    income: 1800000,
+    deductions: 200000,
+    estimatedTax: 65000,
+  },
+  {
+    year: "2023 / 2024",
+    reference: "RET-2024-003",
+    status: "Validation Failed",
+    updated: "02 Aug 2024",
+    income: 1600000,
+    deductions: 150000,
+    estimatedTax: 45000,
+  },
+];
+
+const assessmentYears = [
+  "2025 / 2026",
+  "2024 / 2025",
+  "2023 / 2024",
+];
+
+const formatCurrency = (amount: number) =>
+  `LKR ${amount.toLocaleString("en-US")}`;
+
+function TaxReturns() {
+  const [view, setView] = useState<ViewMode>("list");
+
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+
+  const [selectedYear, setSelectedYear] = useState("2025 / 2026");
+
+  const [returns] = useState<TaxReturnData[]>(initialReturns);
+
+  const selectedReturn = returns.find(
+    (item) => item.year === selectedYear
+  );
+
+  const totalReturns = returns.length;
+
+  const readyReturns = returns.filter(
+    (item) => item.status === "Ready for Filing"
+  ).length;
+
+  const draftReturns = returns.filter(
+    (item) => item.status === "Draft"
+  ).length;
+
+  const handlePrepare = () => {
+    setSelectedYear("2025 / 2026");
+    setView("prepare");
+  };
+
+  const handleView = (year: string) => {
+    setSelectedYear(year);
+    setView("review");
+  };
+
+  const statusStyles: Record<ReturnStatus, string> = {
+    Draft: "bg-blue-50 text-blue-700",
+    "Ready for Filing": "bg-green-50 text-green-700",
+    "Validation Failed": "bg-red-50 text-red-700",
+  };
+
+const handleDownloadPDF = () => {
+  if (!selectedReturn) {
+    alert("No tax return found for this assessment year.");
+    return;
+  }
+
+  try {
+    const pdf = new jsPDF();
+
+    const taxableIncome =
+      selectedReturn.income - selectedReturn.deductions;
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(24);
+    pdf.setTextColor(30, 64, 175);
+    pdf.text("TaxMate", 105, 25, { align: "center" });
+
+    pdf.setFontSize(14);
+    pdf.setTextColor(30, 41, 59);
+    pdf.text("PREPARED TAX RETURN SUMMARY", 105, 36, {
+      align: "center",
+    });
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.text(`Assessment Year: ${selectedYear}`, 105, 45, {
+      align: "center",
+    });
+
+    pdf.setDrawColor(226, 232, 240);
+    pdf.line(20, 53, 190, 53);
+
+    // Taxpayer Information
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13);
+    pdf.setTextColor(30, 64, 175);
+    pdf.text("Taxpayer Information", 20, 65);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(51, 65, 85);
+    pdf.text("Full Name: Kamal Perera", 20, 77);
+    pdf.text("TIN: 123456789", 20, 86);
+
+    pdf.line(20, 97, 190, 97);
+
+    // Income & Tax Summary
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13);
+    pdf.setTextColor(30, 64, 175);
+    pdf.text("Income & Tax Summary", 20, 109);
+
+    const addRow = (
+      label: string,
+      amount: number,
+      y: number
+    ) => {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(51, 65, 85);
+
+      pdf.text(label, 20, y);
+      pdf.text(
+        `LKR ${amount.toLocaleString("en-US")}`,
+        190,
+        y,
+        { align: "right" }
+      );
+    };
+
+    addRow("Annual Income", selectedReturn.income, 122);
+    addRow("Total Deductions", selectedReturn.deductions, 133);
+    addRow("Taxable Income", taxableIncome, 144);
+
+    // Estimated Tax Payable Highlight
+    pdf.setFillColor(239, 246, 255);
+    pdf.setDrawColor(191, 219, 254);
+    pdf.roundedRect(20, 153, 170, 17, 3, 3, "FD");
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(30, 64, 175);
+    pdf.setFontSize(11);
+
+    pdf.text("Estimated Tax Payable", 25, 164);
+    pdf.text(
+      `LKR ${selectedReturn.estimatedTax.toLocaleString("en-US")}`,
+      185,
+      164,
+      { align: "right" }
+    );
+
+    // Supporting Documents
+    pdf.setFontSize(13);
+    pdf.text("Supporting Documents", 20, 187);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text("No supporting documents attached.", 20, 198);
+
+    // Footer
+    pdf.line(20, 253, 190, 253);
+    pdf.setFontSize(9);
+
+    pdf.text(
+      `Prepared on: ${new Date().toLocaleDateString("en-GB")}`,
+      20,
+      263
+    );
+
+    pdf.text(
+      "Generated by TaxMate - Demonstration only.",
+      20,
+      270
+    );
+
+    pdf.text(
+      "This document is not proof of submission to IRD.",
+      20,
+      276
+    );
+
+    const fileYear = selectedYear.replace(/\s*\/\s*/g, "-");
+
+    pdf.save(`TaxMate_Return_${fileYear}.pdf`);
+
+    setDownloadSuccess(true);
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+    alert("Could not generate PDF. Please try again.");
+  }
+};
+
+
+  return (
+
+
+<div className="w-full space-y-8 px-4 py-6 text-left sm:px-6 lg:px-8">
+      {view === "list" && (
+        <>
+          {/* Page Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-[#17324F]">
+                Tax Returns
+              </h1>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Create, manage and review your tax return drafts.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePrepare}
+              className="rounded-lg bg-[#2563EB] px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              + Prepare new return
+            </button>
+          </div>
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {[
+              {
+                label: "Total returns",
+                value: totalReturns,
+              },
+              {
+                label: "Ready for review",
+                value: readyReturns,
+              },
+              {
+                label: "Drafts in progress",
+                value: draftReturns,
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="min-h-32 rounded-xl border border-[#86A5FF] bg-white p-5"
+              >
+                <p className="text-sm text-slate-500">
+                  {card.label}
+                </p>
+
+                <h2 className="mt-3 text-3xl font-bold text-[#17324F]">
+                  {String(card.value).padStart(2, "0")}
+                </h2>
+              </div>
+            ))}
+          </div>
+
+          {/* Returns Table */}
+          <section>
+            <h2 className="mb-5 text-lg font-semibold text-[#17324F]">
+              Your tax returns
+            </h2>
+
+            <div className="overflow-x-auto rounded-xl border border-[#86A5FF] bg-white">
+              <table className="w-full min-w-[650px] text-left text-sm">
+                <thead className="bg-[#EDF4FF] text-[#17324F]">
+                  <tr>
+                    <th className="px-5 py-4 font-semibold">
+                      Assessment year
+                    </th>
+
+                    <th className="px-5 py-4 font-semibold">
+                      Return reference
+                    </th>
+
+                    <th className="px-5 py-4 font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 font-semibold">
+                      Last updated
+                    </th>
+
+                    <th className="px-5 py-4 font-semibold">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {returns.map((item) => (
+                    <tr
+                      key={item.reference}
+                      className="border-t border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="px-5 py-4 font-medium text-slate-700">
+                        {item.year}
+                      </td>
+
+                      <td className="px-5 py-4 text-slate-500">
+                        {item.reference}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyles[item.status]}`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4 text-slate-500">
+                        {item.updated}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleView(item.year)}
+                          className="font-medium text-blue-600 hover:underline"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <p className="text-xs text-slate-400">
+            TaxMate prepares return drafts only; submission to the
+            IRD is not performed through this platform.
+          </p>
+        </>
+      )}
+
+      {/* SCREEN 2 - PREPARE TAX RETURN */}
+      {view === "prepare" && (
+        <>
+          <div>
+            <h1 className="text-3xl font-bold text-[#17324F]">
+              Prepare Tax Return
+            </h1>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Guided preparation, validation and document review.
+            </p>
+          </div>
+
+          <div className="mt-12 rounded-xl border border-[#86A5FF] bg-white p-6 sm:p-8">
+            <h2 className="text-xl font-semibold text-[#17324F]">
+              Select your assessment year
+            </h2>
+
+            <p className="mt-3 text-sm text-slate-500">
+              Choose the tax year for this draft. The next steps will
+              prefill your saved profile and financial records.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-end gap-6 sm:gap-12">
+              <div className="w-full max-w-64">
+                <label
+                  htmlFor="assessment-year"
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  Assessment year
+                </label>
+
+                <select
+                  id="assessment-year"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="w-full rounded-lg border border-[#86A5FF] bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  {assessmentYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setView("review")}
+                className="rounded-lg bg-[#2563EB] px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Review
+              </button>
+            </div>
+
+            <div className="mt-10 rounded-lg border border-[#86A5FF] bg-[#EFF6FF] p-5">
+              <p className="text-sm leading-6 text-[#24415F]">
+                Your existing income and deductions will be used as a
+                starting point. You can review and correct them
+                before generating a draft.
+              </p>
+            </div>
+
+            <div className="mt-12">
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                className="rounded-lg border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Back to Tax Returns
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400">
+            Final step: validation and downloadable prepared return
+            summary. This is not an IRD filing service.
+          </p>
+        </>
+      )}
+
+      {/* SCREEN 3 - TAX RETURN REVIEW */}
+      {view === "review" && (
+        <>
+          <div>
+            <h1 className="text-3xl font-bold text-[#17324F]">
+              Tax Return Review
+            </h1>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Assessment Year: {selectedYear}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#86A5FF] bg-white p-6 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-[#17324F]">
+                Prepared Tax Return Summary
+              </h2>
+
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                {selectedReturn?.status ?? "Draft"}
+              </span>
+            </div>
+
+            <hr className="my-6 border-slate-200" />
+
+            {/* Taxpayer Information */}
+            <h3 className="mb-4 font-semibold text-blue-800">
+              Taxpayer Information
+            </h3>
+
+            <div className="grid gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-slate-500">Full Name</p>
+
+                <p className="mt-1 font-medium">
+                  Kamal Perera
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-500">TIN</p>
+
+                <p className="mt-1 font-medium">
+                  123456789
+                </p>
+              </div>
+            </div>
+
+            <hr className="my-6 border-slate-200" />
+
+            {/* Income and Tax */}
+            <h3 className="mb-4 font-semibold text-blue-800">
+              Income & Tax Summary
+            </h3>
+
+            <div className="space-y-4 text-sm">
+              <div className="flex justify-between gap-3">
+                <span>Annual Income</span>
+                <span>
+                  {formatCurrency(selectedReturn?.income ?? 0)}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Total Deductions</span>
+                <span>
+                  {formatCurrency(selectedReturn?.deductions ?? 0)}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-3">
+                <span>Taxable Income</span>
+                <span>
+                  {formatCurrency(
+                    (selectedReturn?.income ?? 0) -
+                      (selectedReturn?.deductions ?? 0)
+                  )}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 font-semibold text-blue-800">
+                <span>Estimated Tax Payable</span>
+                <span>
+                  {formatCurrency(selectedReturn?.estimatedTax ?? 0)}
+                </span>
+              </div>
+            </div>
+
+            <hr className="my-6 border-slate-200" />
+
+            {/* Supporting Documents */}
+            <h3 className="mb-3 font-semibold text-blue-800">
+              Supporting Documents
+            </h3>
+
+            <p className="text-sm text-slate-500">
+              No supporting documents attached.
+            </p>
+
+            <p className="mt-6 text-xs text-slate-500">
+              Demo values only. This is not a verified tax calculation
+              or proof of submission to the IRD.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="mt-8 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setView("prepare")}
+                className="rounded-lg border border-slate-300 px-6 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Back
+              </button>
+
+              
+              <button
+                 type="button"
+                 onClick={() => {
+                   setDownloadSuccess(false);
+                   setView("pdf-preview");
+                 }}
+                className="rounded-lg bg-[#2563EB] px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+              Download as PDF
+              </button>
+
+            </div>
+          </div>
+        </>
+      )}
+
+      
+{/* SCREEN 4 - PDF PREVIEW */}
+{view === "pdf-preview" && selectedReturn && (
+  <div className="space-y-6 text-left">
+
+    {/* Page Heading */}
+    <div>
+      <h1 className="text-3xl font-bold text-[#17324F]">
+        PDF Preview
+      </h1>
+
+      <p className="mt-2 text-sm text-slate-500">
+        Assessment Year: {selectedYear}
       </p>
+    </div>
+
+    {/* Download Success Message */}
+    {downloadSuccess && (
+      <div
+        role="status"
+        className="rounded-lg border border-green-200 bg-green-50 p-4"
+      >
+        <p className="font-semibold text-green-800">
+          ✓ PDF Downloaded Successfully!
+        </p>
+
+        <p className="mt-1 text-sm text-green-700">
+          Your tax return PDF has been generated.
+        </p>
+      </div>
+    )}
+
+    {/* PDF Document Preview */}
+    <div className="mx-auto max-w-[595px] border border-slate-200 bg-white p-6 shadow-lg sm:p-12">
+
+      {/* PDF Header */}
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-blue-800">
+          TaxMate
+        </h2>
+
+        <p className="mt-2 text-sm font-semibold text-slate-800">
+          PREPARED TAX RETURN SUMMARY
+        </p>
+
+        <p className="mt-1 text-xs text-slate-500">
+          Assessment Year: {selectedYear}
+        </p>
+      </div>
+
+      <hr className="my-6 border-slate-200" />
+
+      {/* Taxpayer Information */}
+      <h3 className="mb-4 font-semibold text-blue-800">
+        Taxpayer Information
+      </h3>
+
+      <div className="space-y-3 text-sm">
+        <div className="flex justify-between gap-4">
+          <span className="text-slate-500">
+            Full Name
+          </span>
+          <span className="font-medium text-slate-800">
+            Kamal Perera
+          </span>
+        </div>
+
+        <div className="flex justify-between gap-4">
+          <span className="text-slate-500">
+            TIN
+          </span>
+          <span className="font-medium text-slate-800">
+            123456789
+          </span>
+        </div>
+      </div>
+
+      <hr className="my-6 border-slate-200" />
+
+      {/* Income & Tax Summary */}
+      <h3 className="mb-4 font-semibold text-blue-800">
+        Income & Tax Summary
+      </h3>
+
+      <div className="space-y-4 text-sm">
+        <div className="flex justify-between gap-4">
+          <span>Annual Income</span>
+          <span>
+            {formatCurrency(selectedReturn.income)}
+          </span>
+        </div>
+
+        <div className="flex justify-between gap-4">
+          <span>Total Deductions</span>
+          <span>
+            {formatCurrency(selectedReturn.deductions)}
+          </span>
+        </div>
+
+        <div className="flex justify-between gap-4">
+          <span>Taxable Income</span>
+          <span>
+            {formatCurrency(
+              selectedReturn.income -
+              selectedReturn.deductions
+            )}
+          </span>
+        </div>
+
+        {/* Highlighted Tax */}
+        <div className="flex flex-wrap justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 font-semibold text-blue-800">
+          <span>Estimated Tax Payable</span>
+          <span>
+            {formatCurrency(selectedReturn.estimatedTax)}
+          </span>
+        </div>
+      </div>
+
+      <hr className="my-6 border-slate-200" />
+
+      {/* Supporting Documents */}
+      <h3 className="mb-3 font-semibold text-blue-800">
+        Supporting Documents
+      </h3>
+
+      <p className="text-sm text-slate-500">
+        No supporting documents attached.
+      </p>
+
+      <hr className="my-8 border-slate-200" />
+
+      {/* PDF Footer */}
+      <p className="text-xs text-slate-400">
+        Prepared on: {new Date().toLocaleDateString("en-GB")}
+      </p>
+
+      <p className="mt-2 text-xs text-slate-400">
+        Generated by TaxMate. Demonstration only.
+        This document is not proof of submission to IRD.
+      </p>
+    </div>
+
+    {/* Action Buttons */}
+    <div className="mx-auto flex max-w-[595px] flex-wrap justify-end gap-3">
+
+      <button
+        type="button"
+        onClick={() => setView("review")}
+        className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Back
+      </button>
+
+      <button
+        type="button"
+        onClick={handleDownloadPDF}
+        className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+      >
+        Download PDF
+      </button>
+    </div>
+
+  </div>
+)}
+
+
     </div>
   );
 }
