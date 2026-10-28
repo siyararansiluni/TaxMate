@@ -14,12 +14,12 @@ type DemoUser = {
 
 const demoUsers: Record<Role, DemoUser> = {
   taxpayer: {
-    email: "taxpayer@taxmate.com",
-    password: "taxpayer123",
-    role: "TAXPAYER",
-    label: "TaxPayer",
-    destination: "/taxpayer/dashboard",
-  },
+  email: "taxpayer@taxmate.com",
+  password: "taxpayer123",
+  role: "TAXPAYER",
+  label: "TaxPayer",
+  destination: "/dashboard",
+},
   advisor: {
     email: "advisor@taxmate.com",
     password: "advisor123",
