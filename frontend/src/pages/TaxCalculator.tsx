@@ -35,16 +35,7 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
     <main className="min-h-screen bg-white px-5 py-6 sm:px-7">
       <div className="mx-auto max-w-6xl">
 
-        {/* Breadcrumb and assessment year */}
-        <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
-          <p className="text-xs text-slate-500">
-            TaxMate / Tax Calculator
-          </p>
-
-          <span className="rounded-full bg-blue-50 px-4 py-1.5 text-xs text-slate-600">
-            2025 / 2026
-          </span>
-        </div>
+        
 
         {/* Page heading */}
         <div className="mb-6">
