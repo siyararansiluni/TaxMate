@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ADVISORS } from '../data/advisors'
+import { ADVISORS } from '../data/Advisors'
 
 const ALL = 'All specializations'
 const SPECIALIZATIONS = [ALL, ...Array.from(new Set(ADVISORS.map((a) => a.specialization)))]

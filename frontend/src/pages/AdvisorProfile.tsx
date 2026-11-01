@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getAdvisor } from '../data/advisors'
+import { getAdvisor } from '../data/Advisors'
 
 const iconProps = {
   viewBox: '0 0 24 24',
