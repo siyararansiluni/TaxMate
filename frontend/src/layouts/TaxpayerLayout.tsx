@@ -10,17 +10,23 @@ const PAGE_TITLES: Record<string, string> = {
   '/tax-calculator': 'Tax Calculator',
   '/tax-returns': 'Tax Returns',
   '/profile': 'My Profile',
+  '/tax-advisor': 'Find a Tax Advisor', 
 }
 
 function TaxpayerLayout() {
   const { pathname } = useLocation()
+  const title =
+  Object.entries(PAGE_TITLES).find(
+    ([path]) => pathname === path || pathname.startsWith(path + '/'),
+  )?.[1] ?? ''
 
   return (
     <div className="flex min-h-screen bg-white">
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar page={PAGE_TITLES[pathname] ?? ''} />
+           <TopBar page={title} />   
+       
 
         <main className="flex-1">
           <Outlet />
