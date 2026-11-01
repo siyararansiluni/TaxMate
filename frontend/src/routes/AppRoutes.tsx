@@ -8,6 +8,8 @@ import IncomeManagement from '../pages/IncomeManagement'
 import ExpensesDeductions from '../pages/ExpensesDeductions'
 import TaxCalculator from '../pages/TaxCalculator'
 import TaxReturns from '../pages/TaxReturns'
+import FindTaxAdvisor from '../pages/FindTaxAdvisor'
+import AdvisorProfile from '../pages/AdvisorProfile'
 
 import TaxpayerLayout from '../layouts/TaxpayerLayout'
 
@@ -29,6 +31,8 @@ function AppRoutes() {
         <Route path="/expenses" element={<ExpensesDeductions />} />
         <Route path="/tax-calculator" element={<TaxCalculator />} />
         <Route path="/tax-returns" element={<TaxReturns />} />
+        <Route path="/tax-advisor" element={<FindTaxAdvisor />} />
+        <Route path="/tax-advisor/:advisorId" element={<AdvisorProfile />} />
       </Route>
     </Routes>
   )
