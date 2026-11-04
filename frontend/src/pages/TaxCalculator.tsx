@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 function TaxCalculator() {
+  const [assessmentYear, setAssessmentYear] = useState("2025/2026");
   const [income, setIncome] = useState({
   employee: "",
   business: "",
@@ -22,6 +23,9 @@ const totalIncome =
   medical: "",
   other: "",
 });
+
+const [apitWithheld, setApitWithheld] = useState("");
+
 const totalDeductions =
   Number(deductions.donations || 0) +
   Number(deductions.insurance || 0) +
@@ -30,6 +34,8 @@ const totalDeductions =
 
 const taxableIncome = Math.max(0, totalIncome - totalDeductions);
 const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
+const [error, setError] = useState("");
+const [successMessage, setSuccessMessage] = useState("");
 
   return (
     <main className="min-h-screen bg-white px-5 py-6 sm:px-7">
@@ -69,9 +75,15 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
             <label className="mb-5 block text-xs text-slate-600">
               Assessment year
 
-              <div className="mt-2 rounded-lg border border-slate-200 px-3 py-2.5 text-slate-700">
-                2025 / 2026
-              </div>
+              <select
+  value={assessmentYear}
+  onChange={(e) => setAssessmentYear(e.target.value)}
+  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-center text-sm text-slate-700 outline-none focus:border-blue-500"
+>
+  <option value="2025/2026">2025 / 2026</option>
+  <option value="2024/2025">2024 / 2025</option>
+  <option value="2023/2024">2023 / 2024</option>
+</select>
             </label>
 
             <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3">
@@ -159,14 +171,78 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
 
               
             </div>
+<div className="mt-6">
+  <label className="mb-2 block text-sm font-medium text-slate-700">
+    APIT / Tax Withheld
+  </label>
 
+  <div className="flex overflow-hidden rounded-lg border border-slate-200">
+    <span className="bg-slate-100 px-3 py-2.5 text-sm text-slate-500">
+      LKR
+    </span>
+
+    <input
+      type="number"
+      min="0"
+      placeholder="Enter APIT amount"
+      value={apitWithheld}
+      onChange={(e) => setApitWithheld(e.target.value)}
+      className="w-full min-w-0 flex-1 bg-white px-3 py-2.5 text-right text-sm outline-none focus:bg-blue-50"
+    />
+  </div>
+
+  <p className="mt-1 text-xs text-slate-500">
+    Enter the tax already deducted or withheld.
+  </p>
+</div>
+{error && (
+  <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+    {error}
+  </p>
+)}
+{successMessage && (
+  <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">
+    {successMessage}
+  </p>
+)}
           <button
             type="button"
-            onClick={() => {
-    // Temporary demo calculation only
-    const tax = taxableIncome * 0.1;
-    setEstimatedTax(tax);
-           }}
+           onClick={() => {
+  const allValues = [
+    ...Object.values(income),
+    ...Object.values(deductions),
+    apitWithheld,
+  ];
+  const isEmpty = allValues.every(
+  (value) => value === ""
+);
+
+if (isEmpty) {
+  setError("Please enter your income details.");
+  setSuccessMessage("");
+  setEstimatedTax(null);
+  return;
+}
+
+  const hasInvalidValue = allValues.some(
+    (value) => value !== "" && Number(value) < 0
+  );
+
+  if (hasInvalidValue) {
+    setError("Please enter valid non-negative amounts.");
+    setSuccessMessage("");
+    setEstimatedTax(null);
+    return;
+  }
+
+  setError("");
+  setSuccessMessage("Tax estimate calculated successfully.");
+
+  // Temporary demo calculation only
+  const tax = taxableIncome * 0.1;
+  setEstimatedTax(tax);
+}}
+           
            className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
           >
            Calculate estimated tax
@@ -190,13 +266,23 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
   "Gross income",
   "Deductions",
   "Taxable income",
-].map((label) => {
+  "APIT / Tax Withheld",
+  "Remaining Tax",
+]
+.map((label) => {
   const amount =
-    label === "Gross income"
-      ? totalIncome
-      : label === "Deductions"
-        ? totalDeductions
-        : taxableIncome;
+  label === "Gross income"
+    ? totalIncome
+    : label === "Deductions"
+    ? totalDeductions
+    : label === "Taxable income"
+    ? taxableIncome
+    : label === "APIT / Tax Withheld"
+    ? Number(apitWithheld || 0)
+    : Math.max(
+        0,
+        (estimatedTax ?? 0) - Number(apitWithheld || 0)
+      );
 
   return (
     <div
@@ -216,19 +302,40 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
 
 
               <div className="mt-4 rounded-lg bg-blue-50 p-5">
-                <p className="text-xs text-slate-500">
-                  Estimated tax
-                </p>
+  <p className="text-xs text-slate-500">
+    Estimated Tax
+  </p>
 
-                <p className="mt-4 text-lg font-bold text-blue-600">
-                {estimatedTax === null
-                ? "Calculated on request"
-                : `LKR ${estimatedTax.toLocaleString("en-LK", {
-                 minimumFractionDigits: 2,
-                 maximumFractionDigits: 2,
-                })}`}
-                </p>
-              </div>
+  <p className="mt-2 text-2xl font-bold text-blue-600">
+    {estimatedTax === null
+      ? "Calculate to view"
+      : `LKR ${estimatedTax.toLocaleString("en-LK", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`}
+  </p>
+
+  <div className="mt-4 space-y-3 border-t border-blue-200 pt-4">
+    <div className="flex justify-between text-sm">
+      <span className="text-slate-600">APIT / Tax Withheld</span>
+      <span className="font-medium text-slate-700">
+        LKR {Number(apitWithheld || 0).toLocaleString("en-LK")}
+      </span>
+    </div>
+
+    <div className="flex justify-between text-sm">
+      <span className="font-semibold text-slate-700">
+        Remaining Tax
+      </span>
+      <span className="font-bold text-blue-700">
+        LKR {Math.max(
+          0,
+          (estimatedTax ?? 0) - Number(apitWithheld || 0)
+        ).toLocaleString("en-LK")}
+      </span>
+    </div>
+  </div>
+</div>
 
               <button
                 type="button"
@@ -244,7 +351,7 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
               </h2>
 
               <p className="mt-4 text-xs text-slate-600">
-                Assessment Year: 2025/2026
+                Assessment Year: {assessmentYear}
               </p>
 
               <div className="mt-3 space-y-2 text-xs text-slate-600">
@@ -254,6 +361,8 @@ const [estimatedTax, setEstimatedTax] = useState<number | null>(null);
                 <p>APIT / tax withheld</p>
               </div>
             </section>
+
+
 
           </div>
         </div>
