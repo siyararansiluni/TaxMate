@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getAdvisor } from '../data/Advisors'
+import ConnectionRequestModal from '../components/ConnectionRequestModal'
+import type { ConnectionRequest } from '../components/ConnectionRequestModal'
 
 const iconProps = {
   viewBox: '0 0 24 24',
@@ -43,6 +46,9 @@ function AdvisorProfile() {
   const { advisorId } = useParams()
   const advisor = getAdvisor(advisorId)
 
+  // Controls the "Send connection request" popup (must be above the early return)
+  const [showRequestModal, setShowRequestModal] = useState(false)
+
   if (!advisor) {
     return (
       <div className="px-4 py-8 sm:px-6 lg:px-8">
@@ -60,6 +66,18 @@ function AdvisorProfile() {
     { label: 'Office Address', value: advisor.address },
     { label: 'Working Hours', value: advisor.hours },
   ]
+
+  const handleSubmitRequest = async ({ service, message }: ConnectionRequest) => {
+    // TODO: replace with your real API call.
+    // Throw an error if it fails so the modal shows the error message, e.g.:
+    // const res = await fetch('/api/connection-requests', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ advisorId, service, message }),
+    // })
+    // if (!res.ok) throw new Error('Request failed')
+    console.log('Connection request:', { advisorId, service, message })
+  }
 
   return (
     <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -94,12 +112,14 @@ function AdvisorProfile() {
             </div>
           </div>
 
-          <a
-            href={`mailto:${advisor.email}?subject=Tax consultation request`}
+          {/* Was a mailto link; now opens the popup */}
+          <button
+            type="button"
+            onClick={() => setShowRequestModal(true)}
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
           >
             Request Consultation <span aria-hidden>→</span>
-          </a>
+          </button>
         </div>
 
         <h3 className="mt-6 text-sm font-semibold text-[#173453]">About</h3>
@@ -129,6 +149,14 @@ function AdvisorProfile() {
           </ul>
         </InfoCard>
       </div>
+
+      <ConnectionRequestModal
+        open={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        advisor={{ name: advisor.name, title: advisor.title }}
+        services={advisor.services}
+        onSubmit={handleSubmitRequest}
+      />
     </div>
   )
 }
