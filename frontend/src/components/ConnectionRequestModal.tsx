@@ -146,19 +146,35 @@ function ModalContent({
                 <label htmlFor="consult-service" className="mb-1.5 block text-sm font-medium text-slate-700">
                   What do you need guidance on?
                 </label>
-                <select
-                  id="consult-service"
-                  autoFocus
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  {services.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+  <select
+    id="consult-service"
+    autoFocus
+    value={service}
+    onChange={(e) => setService(e.target.value)}
+    className="w-full cursor-pointer appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-sm text-slate-900 transition-colors hover:border-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+  >
+    {services.map((s) => (
+      <option key={s} value={s}>
+        {s}
+      </option>
+    ))}
+  </select>
+
+  {/* Custom arrow */}
+  <svg
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+    aria-hidden="true"
+  >
+    <path d="m5 7.5 5 5 5-5" />
+  </svg>
+</div>
               </div>
 
               <div>
