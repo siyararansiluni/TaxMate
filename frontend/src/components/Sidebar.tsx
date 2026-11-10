@@ -45,10 +45,10 @@ function Sidebar({ open = false, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`sticky top-0 flex h-screen w-64 shrink-0 flex-col self-start border-r border-blue-200 bg-[#DCEAF8]
-          max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:h-auto max-lg:transition-transform max-lg:duration-200 motion-reduce:transition-none
-          ${open ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}`}
-      >
+  className={`sticky top-0 flex h-screen w-64 shrink-0 flex-col self-start border-r border-blue-200 bg-[#DCEAF8]
+    max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:h-dvh max-lg:self-auto max-lg:transition-transform max-lg:duration-200 motion-reduce:transition-none
+    ${open ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}`}
+>
         <button
           type="button"
           onClick={onClose}

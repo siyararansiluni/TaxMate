@@ -30,6 +30,56 @@ const ServicesIcon = () => (
   </svg>
 )
 
+// Icon + short description for each service. The key must match the service name exactly.
+const SERVICE_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
+  'Individual Tax Consultation': {
+    description: 'One-to-one tax guidance',
+    icon: (
+      <>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20c.7-3.5 3.6-5 7-5s6.3 1.5 7 5" />
+      </>
+    ),
+  },
+  'Tax Return Preparation': {
+    description: 'Prepare and file your return',
+    icon: (
+      <>
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+        <path d="M14 3v5h5M9 14l2 2 4-4" />
+      </>
+    ),
+  },
+  'Tax Planning and Advisory': {
+    description: 'Plan ahead and reduce tax',
+    icon: <path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" />,
+  },
+  'Income Tax Compliance': {
+    description: 'Stay within the regulations',
+    icon: (
+      <>
+        <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
+  },
+  'Review of Tax Assessments': {
+    description: 'Check and challenge assessments',
+    icon: (
+      <>
+        <circle cx="11" cy="11" r="6" />
+        <path d="m20 20-4.5-4.5" />
+      </>
+    ),
+  },
+}
+
+// Used for any service name that isn't in the list above
+const FALLBACK_DETAILS = {
+  description: '',
+  icon: <path d="M5 12.5 10 17.5 19 7" />,
+}
+
 function InfoCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <section className="rounded-xl border border-blue-300 bg-blue-50/50 p-6">
@@ -82,8 +132,18 @@ function AdvisorProfile() {
   return (
     <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <header>
-        <Link to="/tax-advisor" className="text-sm font-medium text-blue-600 hover:underline">
-          ← Back to advisors
+        <Link
+          to="/tax-advisor"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white py-1.5 pl-2 pr-3 text-sm text-slate-600 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+            <path
+              fillRule="evenodd"
+              d="M12.7 5.3a1 1 0 0 1 0 1.4L9.4 10l3.3 3.3a1 1 0 0 1-1.4 1.4l-4-4a1 1 0 0 1 0-1.4l4-4a1 1 0 0 1 1.4 0Z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Back to advisors
         </Link>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#173453]">Advisor Profile</h1>
         <p className="mt-1.5 text-sm text-slate-500">
@@ -116,7 +176,7 @@ function AdvisorProfile() {
           <button
             type="button"
             onClick={() => setShowRequestModal(true)}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
           >
             Request Consultation <span aria-hidden>→</span>
           </button>
@@ -140,12 +200,34 @@ function AdvisorProfile() {
         </InfoCard>
 
         <InfoCard icon={<ServicesIcon />} title="Tax Services">
-          <ul className="space-y-4">
-            {advisor.services.map((s) => (
-              <li key={s} className="text-sm font-semibold text-[#173453]">
-                {s}
-              </li>
-            ))}
+          <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            {advisor.services.map((s) => {
+              const details = SERVICE_DETAILS[s] ?? FALLBACK_DETAILS
+              return (
+                <li key={s} className="flex items-start gap-3 rounded-lg bg-white p-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                      aria-hidden
+                    >
+                      {details.icon}
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#173453]">{s}</p>
+                    {details.description && (
+                      <p className="mt-0.5 text-xs text-slate-500">{details.description}</p>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         </InfoCard>
       </div>
