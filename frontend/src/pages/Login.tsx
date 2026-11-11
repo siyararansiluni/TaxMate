@@ -11,27 +11,33 @@ interface DemoUser {
   destination: string;
 }
 
+/**
+ * Destinations match the routes in AppRoutes.
+ * Only "/dashboard" exists right now, so all three demo roles go there.
+ * When you build the advisor and admin dashboards, add their routes
+ * and change these two paths (e.g. "/advisor/dashboard", "/admin/dashboard").
+ */
 const demoUsers: Record<Role, DemoUser> = {
   taxpayer: {
     email: "taxpayer@taxmate.com",
     password: "taxpayer123",
     role: "TAXPAYER",
     label: "Taxpayer",
-    destination: "/taxpayer/dashboard",
+    destination: "/dashboard",
   },
   advisor: {
     email: "advisor@taxmate.com",
     password: "advisor123",
     role: "ADVISOR",
     label: "Tax Advisor",
-    destination: "/advisor/dashboard",
+    destination: "/dashboard",
   },
   admin: {
     email: "admin@taxmate.com",
     password: "admin123",
     role: "ADMIN",
     label: "Administrator",
-    destination: "/admin/dashboard",
+    destination: "/dashboard",
   },
 };
 
@@ -501,6 +507,7 @@ export default function Login() {
                     />
                     Remember me
                   </label>
+                  {/* Add a /forgot-password route when you build that page */}
                   <Link
                     to="/forgot-password"
                     className="font-medium text-blue-700 hover:underline"
@@ -551,6 +558,7 @@ export default function Login() {
                 ))}
               </div>
 
+              {/* Add a /register route when you build that page */}
               <p className="mt-6 text-center text-base text-slate-800">
                 Don&apos;t have an account?{" "}
                 <Link
