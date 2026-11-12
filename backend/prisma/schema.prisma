@@ -1,0 +1,359 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model advisor_applications {
+  application_id   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  advisor_id       String           @db.Uuid
+  status           String           @default("PENDING") @db.VarChar(20)
+  reviewed_by      String?          @db.Uuid
+  reviewed_at      DateTime?        @db.Timestamptz(6)
+  remarks          String?
+  created_at       DateTime         @default(now()) @db.Timestamptz(6)
+  advisor_profiles advisor_profiles @relation(fields: [advisor_id], references: [advisor_id], onDelete: NoAction, onUpdate: NoAction)
+  users            users?           @relation(fields: [reviewed_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model advisor_profiles {
+  advisor_id           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String                 @unique @db.Uuid
+  qualifications       String?
+  experience_years     Int?
+  specialization       String?                @db.VarChar(150)
+  bio                  String?
+  phone                String?                @db.VarChar(20)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  advisor_applications advisor_applications[]
+  users                users                  @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model deduction_records {
+  deduction_id      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id       String            @db.Uuid
+  deduction_type_id String            @db.Uuid
+  tax_period_id     String            @db.Uuid
+  amount            Decimal           @db.Decimal(15, 2)
+  description       String?
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime          @default(now()) @db.Timestamptz(6)
+  deduction_types   deduction_types   @relation(fields: [deduction_type_id], references: [deduction_type_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_periods       tax_periods       @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_profiles taxpayer_profiles @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model deduction_types {
+  deduction_type_id String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deduction_name    String              @unique @db.VarChar(100)
+  description       String?
+  is_active         Boolean             @default(true)
+  deduction_records deduction_records[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model documents {
+  document_id       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id       String             @db.Uuid
+  file_name         String             @db.VarChar(255)
+  storage_key       String             @unique
+  file_type         String             @db.VarChar(100)
+  file_size         BigInt
+  uploaded_at       DateTime           @default(now()) @db.Timestamptz(6)
+  taxpayer_profiles taxpayer_profiles  @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+  return_documents  return_documents[]
+}
+
+model expense_categories {
+  category_id     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_name   String            @unique @db.VarChar(100)
+  description     String?
+  is_active       Boolean           @default(true)
+  expense_records expense_records[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model expense_records {
+  expense_id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id        String             @db.Uuid
+  category_id        String             @db.Uuid
+  tax_period_id      String             @db.Uuid
+  amount             Decimal            @db.Decimal(15, 2)
+  expense_date       DateTime           @db.Date
+  description        String?
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime           @default(now()) @db.Timestamptz(6)
+  expense_categories expense_categories @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_periods        tax_periods        @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_profiles  taxpayer_profiles  @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model income_categories {
+  category_id    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_name  String           @unique @db.VarChar(100)
+  description    String?
+  is_active      Boolean          @default(true)
+  income_records income_records[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model income_records {
+  income_id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id          String                @db.Uuid
+  employment_id        String?               @db.Uuid
+  category_id          String                @db.Uuid
+  tax_period_id        String                @db.Uuid
+  amount               Decimal               @db.Decimal(15, 2)
+  income_date          DateTime              @db.Date
+  description          String?
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime              @default(now()) @db.Timestamptz(6)
+  income_categories    income_categories     @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_employments taxpayer_employments? @relation(fields: [employment_id, taxpayer_id], references: [employment_id, taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_periods          tax_periods           @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_profiles    taxpayer_profiles     @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model permissions {
+  permission_id    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  permission_name  String             @unique @db.VarChar(100)
+  description      String?
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+}
+
+model return_documents {
+  return_id   String      @db.Uuid
+  document_id String      @db.Uuid
+  documents   documents   @relation(fields: [document_id], references: [document_id], onDelete: Cascade, onUpdate: NoAction)
+  tax_returns tax_returns @relation(fields: [return_id], references: [return_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([return_id, document_id])
+}
+
+model role_permissions {
+  role_id       String      @db.Uuid
+  permission_id String      @db.Uuid
+  assigned_at   DateTime    @default(now()) @db.Timestamptz(6)
+  permissions   permissions @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_role_permissions_permission")
+  roles         roles       @relation(fields: [role_id], references: [role_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_role_permissions_role")
+
+  @@id([role_id, permission_id])
+}
+
+model roles {
+  role_id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role_name        String             @unique @db.VarChar(50)
+  description      String?
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_brackets {
+  bracket_id  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rule_id     String    @db.Uuid
+  lower_limit Decimal   @db.Decimal(15, 2)
+  upper_limit Decimal?  @db.Decimal(15, 2)
+  tax_rate    Decimal   @db.Decimal(7, 4)
+  tax_rules   tax_rules @relation(fields: [rule_id], references: [rule_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([rule_id, lower_limit])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_calculation_details {
+  detail_id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  calculation_id   String           @db.Uuid
+  rule_id          String?          @db.Uuid
+  description      String
+  taxable_amount   Decimal          @default(0) @db.Decimal(15, 2)
+  applied_rate     Decimal?         @db.Decimal(7, 4)
+  tax_amount       Decimal          @default(0) @db.Decimal(15, 2)
+  tax_calculations tax_calculations @relation(fields: [calculation_id], references: [calculation_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_rules        tax_rules?       @relation(fields: [rule_id], references: [rule_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_calculations {
+  calculation_id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id             String                    @db.Uuid
+  tax_period_id           String                    @db.Uuid
+  version_id              String                    @db.Uuid
+  total_income            Decimal                   @default(0) @db.Decimal(15, 2)
+  taxable_income          Decimal                   @default(0) @db.Decimal(15, 2)
+  estimated_tax           Decimal                   @default(0) @db.Decimal(15, 2)
+  input_snapshot          Json                      @default("{}")
+  calculated_at           DateTime                  @default(now()) @db.Timestamptz(6)
+  tax_calculation_details tax_calculation_details[]
+  tax_periods             tax_periods               @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_profiles       taxpayer_profiles         @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_rule_versions       tax_rule_versions         @relation(fields: [version_id, tax_period_id], references: [version_id, tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_return_revisions    tax_return_revisions[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_periods {
+  tax_period_id        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  period_name          String                 @unique @db.VarChar(30)
+  start_date           DateTime               @db.Date
+  end_date             DateTime               @db.Date
+  status               String                 @default("ACTIVE") @db.VarChar(20)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  deduction_records    deduction_records[]
+  expense_records      expense_records[]
+  income_records       income_records[]
+  tax_calculations     tax_calculations[]
+  tax_returns          tax_returns[]
+  tax_rule_versions    tax_rule_versions[]
+  taxpayer_employments taxpayer_employments[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_reliefs {
+  relief_id   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rule_id     String    @db.Uuid
+  relief_name String    @db.VarChar(150)
+  amount      Decimal?  @db.Decimal(15, 2)
+  conditions  Json      @default("{}")
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  tax_rules   tax_rules @relation(fields: [rule_id], references: [rule_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_return_revisions {
+  revision_id      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  return_id        String            @db.Uuid
+  calculation_id   String?           @db.Uuid
+  revision_number  Int
+  return_data      Json              @default("{}")
+  status           String            @default("DRAFT") @db.VarChar(30)
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  tax_calculations tax_calculations? @relation(fields: [calculation_id], references: [calculation_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_returns      tax_returns       @relation(fields: [return_id], references: [return_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([return_id, revision_number])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_returns {
+  return_id            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id          String                 @db.Uuid
+  tax_period_id        String                 @db.Uuid
+  current_status       String                 @default("DRAFT") @db.VarChar(30)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  return_documents     return_documents[]
+  tax_return_revisions tax_return_revisions[]
+  tax_periods          tax_periods            @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_profiles    taxpayer_profiles      @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([taxpayer_id, tax_period_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_rule_versions {
+  version_id       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tax_period_id    String             @db.Uuid
+  version_number   Int
+  status           String             @default("DRAFT") @db.VarChar(20)
+  effective_from   DateTime?          @db.Date
+  effective_to     DateTime?          @db.Date
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  tax_calculations tax_calculations[]
+  tax_periods      tax_periods        @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  tax_rules        tax_rules[]
+
+  @@unique([tax_period_id, version_number])
+  @@unique([version_id, tax_period_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tax_rules {
+  rule_id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version_id              String                    @db.Uuid
+  rule_name               String                    @db.VarChar(150)
+  rule_type               String                    @db.VarChar(50)
+  description             String?
+  configuration           Json                      @default("{}")
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  tax_brackets            tax_brackets[]
+  tax_calculation_details tax_calculation_details[]
+  tax_reliefs             tax_reliefs[]
+  tax_rule_versions       tax_rule_versions         @relation(fields: [version_id], references: [version_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([rule_id, version_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model taxpayer_employments {
+  employment_id     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taxpayer_id       String            @db.Uuid
+  tax_period_id     String            @db.Uuid
+  employment_type   String            @db.VarChar(50)
+  employer_name     String?           @db.VarChar(150)
+  start_date        DateTime?         @db.Date
+  end_date          DateTime?         @db.Date
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  income_records    income_records[]
+  tax_periods       tax_periods       @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_profiles taxpayer_profiles @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([employment_id, taxpayer_id])
+}
+
+model taxpayer_profiles {
+  taxpayer_id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String                 @unique @db.Uuid
+  tin                  String?                @unique @db.VarChar(30)
+  full_name            String                 @db.VarChar(150)
+  date_of_birth        DateTime?              @db.Date
+  contact_number       String?                @db.VarChar(20)
+  address_line         String?                @db.VarChar(255)
+  city                 String?                @db.VarChar(100)
+  district             String?                @db.VarChar(100)
+  postal_code          String?                @db.VarChar(20)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  deduction_records    deduction_records[]
+  documents            documents[]
+  expense_records      expense_records[]
+  income_records       income_records[]
+  tax_calculations     tax_calculations[]
+  tax_returns          tax_returns[]
+  taxpayer_employments taxpayer_employments[]
+  users                users                  @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user_roles {
+  user_id     String   @db.Uuid
+  role_id     String   @db.Uuid
+  assigned_at DateTime @default(now()) @db.Timestamptz(6)
+  roles       roles    @relation(fields: [role_id], references: [role_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_roles_role")
+  users       users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_roles_user")
+
+  @@id([user_id, role_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model users {
+  user_id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth0_user_id        String                 @unique @db.VarChar(255)
+  email                String                 @db.VarChar(255)
+  account_status       String                 @default("ACTIVE") @db.VarChar(20)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  advisor_applications advisor_applications[]
+  advisor_profiles     advisor_profiles?
+  taxpayer_profiles    taxpayer_profiles?
+  user_roles           user_roles[]
+}
