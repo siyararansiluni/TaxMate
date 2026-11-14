@@ -1,45 +1,7 @@
 import { useId, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
-type Role = "taxpayer" | "advisor" | "admin";
-
-interface DemoUser {
-  email: string;
-  password: string;
-  role: string;
-  label: string;
-  destination: string;
-}
-
-/**
- * Destinations match the routes in AppRoutes.
- * Only "/dashboard" exists right now, so all three demo roles go there.
- * When you build the advisor and admin dashboards, add their routes
- * and change these two paths (e.g. "/advisor/dashboard", "/admin/dashboard").
- */
-const demoUsers: Record<Role, DemoUser> = {
-  taxpayer: {
-    email: "taxpayer@taxmate.com",
-    password: "taxpayer123",
-    role: "TAXPAYER",
-    label: "Taxpayer",
-    destination: "/dashboard",
-  },
-  advisor: {
-    email: "advisor@taxmate.com",
-    password: "advisor123",
-    role: "ADVISOR",
-    label: "Tax Advisor",
-    destination: "/dashboard",
-  },
-  admin: {
-    email: "admin@taxmate.com",
-    password: "admin123",
-    role: "ADMIN",
-    label: "Administrator",
-    destination: "/dashboard",
-  },
-};
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { authenticate } from "../data/mockUsers";
+import { getSession, homePaths, saveSession } from "../auth/session";
 
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
@@ -126,28 +88,6 @@ const features = [
   },
 ];
 
-const roleIcons: Record<Role, ReactNode> = {
-  taxpayer: (
-    <>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1" />
-    </>
-  ),
-  advisor: (
-    <>
-      <path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2" />
-      <circle cx="10" cy="7" r="4" />
-      <path d="M21 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8" />
-    </>
-  ),
-  admin: (
-    <>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5h0a1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" />
-    </>
-  ),
-};
-
 /** Laptop + calculator + coins + rising chart, drawn with plain SVG. */
 function Illustration() {
   const id = useId();
@@ -161,7 +101,8 @@ function Illustration() {
   return (
     <svg
       viewBox="0 0 640 330"
-      className="h-auto w-full"
+      preserveAspectRatio="xMidYMax meet"
+      className="h-full w-full"
       role="img"
       aria-label="Laptop with a tax checklist, a calculator, coins and a rising chart"
     >
@@ -296,35 +237,38 @@ export default function Login() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (selectedRole?: Role) => {
+  // Already logged in? Skip the login page.
+  const existing = getSession();
+  if (existing) {
+    return <Navigate to={homePaths[existing.role]} replace />;
+  }
+
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setError("");
 
-    const checkEmail = email.trim().toLowerCase();
-
-    const user = selectedRole
-      ? demoUsers[selectedRole]
-      : Object.values(demoUsers).find(
-          (u) => u.email === checkEmail && u.password === password
-        );
+    // Temporary login: checks the mock user list. The role comes from the
+    // matched user, so there is no need to choose a role on this page.
+    const user = authenticate(email, password);
 
     if (!user) {
       setError("Invalid email or password. Please try again.");
       return;
     }
 
-    // Demo-only login; this is not real authentication.
+    // "Remember me" keeps the session after the browser is closed.
+    saveSession(
+      { email: user.email, name: user.name, role: user.role },
+      remember
+    );
+
     navigate(user.destination, {
-      state: { role: user.role, email: user.email, label: user.label },
+      state: { role: user.role, email: user.email, label: user.name },
     });
   };
 
-  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    handleLogin();
-  };
-
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-linear-to-br from-white via-blue-50 to-blue-200 font-sans text-slate-800">
+    <main className="relative min-h-dvh w-full overflow-x-hidden bg-linear-to-br from-white via-blue-50 to-blue-200 font-sans text-slate-800 lg:h-dvh lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {/* background shapes */}
       <div className="pointer-events-none absolute -right-40 -top-40 h-160 w-160 rounded-full bg-blue-300/40 blur-3xl" />
       <div className="pointer-events-none absolute -left-40 top-1/3 h-130 w-130 rounded-full bg-sky-200/50 blur-3xl" />
@@ -343,9 +287,9 @@ export default function Login() {
         <path d="M0 70 C150 20 300 120 500 90 C640 70 740 110 800 160 H0 Z" fill="url(#wave)" />
       </svg>
 
-      <div className="relative z-10 mx-auto grid min-h-screen max-w-375 gap-8 px-6 py-8 sm:px-10 lg:grid-cols-[1.15fr_1fr] lg:px-14">
+      <div className="relative z-10 mx-auto grid min-h-dvh max-w-375 gap-8 px-6 py-6 sm:px-10 lg:h-full lg:min-h-150 lg:grid-cols-[1.15fr_1fr] lg:grid-rows-[minmax(0,1fr)] lg:gap-[clamp(1rem,3dvh,2rem)] lg:px-14 lg:py-[clamp(0.75rem,3dvh,2rem)]">
         {/* ================= Left: brand + message ================= */}
-        <section className="flex flex-col">
+        <section className="flex min-h-0 flex-col">
           <div className="flex items-center gap-3">
             <LogoMark className="h-14 w-14" />
             <div className="leading-tight">
@@ -353,13 +297,13 @@ export default function Login() {
                 Tax<span className="text-sky-400">Mate</span>
               </p>
               <p className="text-sm font-medium text-slate-700">
-                Tax Advisor System
+                Tax Management System
               </p>
             </div>
           </div>
 
-          <div className="mt-10 hidden lg:block">
-            <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight text-[#14284b] xl:text-6xl">
+          <div className="mt-[clamp(0.75rem,4dvh,2.5rem)] hidden lg:block">
+            <h1 className="text-[clamp(2rem,6.2dvh,3.75rem)] font-extrabold leading-[1.1] tracking-tight text-[#14284b]">
               Take Control.
               <br />
               Stay <span className="text-blue-600">Tax Confident.</span>
@@ -377,19 +321,19 @@ export default function Login() {
                 strokeLinecap="round"
               />
             </svg>
-            <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-700">
+            <p className="mt-[clamp(0.5rem,2dvh,1.25rem)] max-w-md text-[clamp(0.875rem,2.1dvh,1.125rem)] leading-relaxed text-slate-700">
               Manage your taxes, get expert advice, and stay compliant, all in
               one place.
             </p>
 
-            <ul className="mt-7 flex flex-wrap gap-4">
+            <ul className="mt-[clamp(0.75rem,2.5dvh,1.75rem)] flex flex-wrap gap-4">
               {features.map((f) => (
                 <li
                   key={f.label}
-                  className="flex w-36 flex-col items-center gap-2 rounded-2xl border border-blue-100 bg-white/60 px-3 py-4 text-center text-sm font-medium text-slate-700 shadow-sm backdrop-blur"
+                  className="flex w-36 flex-col items-center gap-2 rounded-2xl border border-blue-100 bg-white/60 px-3 py-[clamp(0.5rem,1.8dvh,1rem)] text-center text-sm font-medium text-slate-700 shadow-sm backdrop-blur"
                 >
                   <span className="text-blue-600">
-                    <Icon className="h-8 w-8">{f.icon}</Icon>
+                    <Icon className="h-[clamp(1.5rem,3.6dvh,2rem)] w-[clamp(1.5rem,3.6dvh,2rem)]">{f.icon}</Icon>
                   </span>
                   {f.label}
                 </li>
@@ -397,15 +341,15 @@ export default function Login() {
             </ul>
           </div>
 
-          <div className="mt-auto hidden pt-6 lg:block">
-            <div className="mx-auto w-full max-w-160">
+          <div className="mt-auto hidden min-h-0 flex-1 pt-4 lg:block">
+            <div className="mx-auto h-full w-full max-w-160">
               <Illustration />
             </div>
           </div>
         </section>
 
         {/* ================= Right: login card ================= */}
-        <section className="flex flex-col">
+        <section className="flex min-h-0 flex-col">
           <div className="hidden items-center justify-end gap-3 text-sm font-medium text-blue-800 md:flex">
             <span className="text-blue-600">
               <Icon className="h-7 w-7">
@@ -416,11 +360,11 @@ export default function Login() {
             Secure &bull; Trusted &bull; For a Better Tomorrow
           </div>
 
-          <div className="flex flex-1 items-center justify-center py-6">
-            <div className="w-full max-w-130 rounded-3xl bg-white p-8 shadow-2xl shadow-blue-900/10 sm:p-10">
+          <div className="flex min-h-0 flex-1 items-center justify-center py-[clamp(0.5rem,2dvh,1.5rem)]">
+            <div className="w-full max-w-130 rounded-3xl bg-white p-[clamp(1.25rem,3.6dvh,2.5rem)] shadow-2xl shadow-blue-900/10">
               <div className="flex flex-col items-center text-center">
-                <LogoMark className="h-14 w-14" />
-                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#14284b]">
+                <LogoMark className="h-[clamp(2.5rem,5.5dvh,3.5rem)] w-[clamp(2.5rem,5.5dvh,3.5rem)]" />
+                <h2 className="mt-2 text-[clamp(1.5rem,3.6dvh,1.875rem)] font-extrabold tracking-tight text-[#14284b]">
                   Welcome Back!
                 </h2>
                 <p className="mt-1 text-base text-slate-700">
@@ -428,7 +372,7 @@ export default function Login() {
                 </p>
               </div>
 
-              <form onSubmit={handleFormSubmit} className="mt-7 space-y-4">
+              <form onSubmit={handleFormSubmit} className="mt-[clamp(0.75rem,2.6dvh,1.75rem)] space-y-[clamp(0.6rem,1.8dvh,1rem)]">
                 <div>
                   <label htmlFor="email" className="sr-only">
                     Email Address
@@ -448,7 +392,7 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="min-w-0 flex-1 bg-transparent py-3.5 text-base text-slate-800 placeholder-slate-500 outline-none"
+                      className="min-w-0 flex-1 bg-transparent py-[clamp(0.55rem,1.7dvh,0.875rem)] text-base text-slate-800 placeholder-slate-500 outline-none"
                     />
                   </div>
                 </div>
@@ -472,13 +416,13 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
-                      className="min-w-0 flex-1 bg-transparent py-3.5 text-base text-slate-800 placeholder-slate-500 outline-none"
+                      className="min-w-0 flex-1 bg-transparent py-[clamp(0.55rem,1.7dvh,0.875rem)] text-base text-slate-800 placeholder-slate-500 outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="text-slate-600 hover:text-blue-700"
+                      className="text-slate-600 hover:bg-blue-600"
                     >
                       {showPassword ? (
                         <Icon>
@@ -524,7 +468,7 @@ export default function Login() {
 
                 <button
                   type="submit"
-                  className="flex w-full items-center justify-center gap-3 rounded-full bg-linear-to-r from-blue-800 to-blue-500 py-3.5 text-lg font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:from-blue-900 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                  className="flex w-full items-center justify-center gap-3 rounded-full bg-linear-to-r from-blue-800 to-blue-500 py-[clamp(0.6rem,1.7dvh,0.875rem)] text-lg font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:from-blue-900 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200"
                 >
                   <Icon>
                     <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
@@ -534,32 +478,8 @@ export default function Login() {
                 </button>
               </form>
 
-              {/* divider */}
-              <div className="my-5 flex items-center gap-4 text-sm text-slate-600">
-                <span className="h-px flex-1 bg-slate-300" />
-                or
-                <span className="h-px flex-1 bg-slate-300" />
-              </div>
-
-              {/* demo role buttons */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {(Object.keys(demoUsers) as Role[]).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => handleLogin(r)}
-                    className="flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-blue-50/60 px-3 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800"
-                  >
-                    <span className="text-blue-700">
-                      <Icon className="h-5 w-5">{roleIcons[r]}</Icon>
-                    </span>
-                    {demoUsers[r].label}
-                  </button>
-                ))}
-              </div>
-
               {/* Add a /register route when you build that page */}
-              <p className="mt-6 text-center text-base text-slate-800">
+              <p className="mt-[clamp(0.75rem,2.4dvh,1.5rem)] text-center text-base text-slate-800">
                 Don&apos;t have an account?{" "}
                 <Link
                   to="/register"
