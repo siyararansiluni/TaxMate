@@ -1,47 +1,56 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+
 import Sidebar from '../components/Sidebar'
 import TopBar from '../components/TopBar'
 import Footer from '../components/Footer'
+import { getSession } from '../auth/session'
 
-//  EXISTING PATHS 
-const PAGE_TITLES: Record<string, string> = {
+// Text shown in the top bar breadcrumb for each page
+const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/profile': 'My Profile',
   '/income': 'Income Management',
   '/expenses': 'Expenses & Deductions',
   '/tax-calculator': 'Tax Calculator',
   '/tax-returns': 'Tax Returns',
-  '/profile': 'My Profile',
+  '/documents': 'Documents',
   '/tax-advisor': 'Find a Tax Advisor',
 }
 
 function TaxpayerLayout() {
   const { pathname } = useLocation()
-  // remember the page where the menu was opened: it counts as open only on that page,
-  // so navigating closes it without needing an effect
-  const [openPath, setOpenPath] = useState<string | null>(null)
-  const menuOpen = openPath === pathname
+  const contentRef = useRef<HTMLElement>(null)
+  const [menuOpen, setMenuOpen] = useState(false) // mobile drawer
 
-  const title =
-    Object.entries(PAGE_TITLES).find(
-      ([path]) => pathname === path || pathname.startsWith(path + '/'),
-    )?.[1] ?? ''
+  const page = pathname.startsWith('/tax-advisor/')
+    ? 'Advisor Profile'
+    : pageTitles[pathname] ?? 'TaxMate'
 
-  // close the drawer with the Escape key
-  useEffect(() => {
-    if (!menuOpen) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenPath(null)
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [menuOpen])
+  const initial = getSession()?.name?.charAt(0).toUpperCase() ?? 'K'
 
+  // Every new page starts at the top, and the mobile drawer closes
+  // Every new page starts at the top
+useEffect(() => {
+  contentRef.current?.scrollTo({ top: 0 })
+}, [pathname])
   return (
-    <div className="flex min-h-screen bg-white">
-      <Sidebar open={menuOpen} onClose={() => setOpenPath(null)} />
+    // Locked to the screen height: the browser page itself never scrolls
+    <div className="flex h-dvh overflow-hidden bg-slate-50">
+      <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar page={title} onMenuClick={() => setOpenPath(pathname)} />
-        <main className="flex-1">
+        <TopBar
+          page={page}
+          initial={initial}
+          onMenuClick={() => setMenuOpen(true)}
+        />
+
+        {/* Only this area scrolls */}
+        <main
+          ref={contentRef}
+          className="flex-1 overflow-y-auto [scrollbar:none] [&::-webkit-scrollbar]:hidden"
+        >
           <Outlet />
         </main>
         <Footer />

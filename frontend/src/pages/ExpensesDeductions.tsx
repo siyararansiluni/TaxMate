@@ -196,7 +196,7 @@ function ExpensesDeductions() {
 
       {/* Page heading */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-[#203448] sm:text-[26px]">
+        <h1 className="text-[28px]  font-bold tracking-tight text-[#203448] sm:text-[28px]">
           Expenses & Deductions
         </h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -291,7 +291,7 @@ function ExpensesDeductions() {
 
       {/* Expense table */}
       <div className="overflow-x-auto rounded-xl border border-[#b8cce5] shadow-sm">
-        <table className="w-full min-w-[850px] border-collapse text-left">
+        <table className="w-full min-w-212.5 border-collapse text-left">
           <thead className="bg-[#edf4ff]">
             <tr className="text-xs font-semibold text-[#40546a]">
               <th className="px-4 py-3.5">Expense description</th>

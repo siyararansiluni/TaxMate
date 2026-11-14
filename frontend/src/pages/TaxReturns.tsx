@@ -236,7 +236,7 @@ const handleDownloadPDF = () => {
           {/* Page Header */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-[#17324F]">
+              <h1 className="text-[28px] font-bold text-[#17324F]">
                 Tax Returns
               </h1>
 
@@ -292,7 +292,7 @@ const handleDownloadPDF = () => {
             </h2>
 
             <div className="overflow-x-auto rounded-xl border border-[#86A5FF] bg-white">
-              <table className="w-full min-w-[650px] text-left text-sm">
+              <table className="w-full min-w-162.5 text-left text-sm">
                 <thead className="bg-[#EDF4FF] text-[#17324F]">
                   <tr>
                     <th className="px-5 py-4 font-semibold">
@@ -612,7 +612,7 @@ const handleDownloadPDF = () => {
     )}
 
     {/* PDF Document Preview */}
-    <div className="mx-auto max-w-[595px] border border-slate-200 bg-white p-6 shadow-lg sm:p-12">
+    <div className="mx-auto max-w-148.5 border border-slate-200 bg-white p-6 shadow-lg sm:p-12">
 
       {/* PDF Header */}
       <div className="text-center">
@@ -722,7 +722,7 @@ const handleDownloadPDF = () => {
     </div>
 
     {/* Action Buttons */}
-    <div className="mx-auto flex max-w-[595px] flex-wrap justify-end gap-3">
+    <div className="mx-auto flex max-w-148.5 flex-wrap justify-end gap-3">
 
       <button
         type="button"

@@ -45,7 +45,7 @@ const [successMessage, setSuccessMessage] = useState("");
 
         {/* Page heading */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-[28px]  font-bold text-slate-900">
             Tax Calculator
           </h1>
 
