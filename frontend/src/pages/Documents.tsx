@@ -227,7 +227,7 @@ function Documents() {
       {/* PAGE HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Documents</h1>
+          <h1 className="text-[28px] font-bold">Documents</h1>
           <p className="mt-2 text-sm text-slate-500">
             Upload and manage your supporting tax documents.
           </p>
@@ -366,7 +366,7 @@ function Documents() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-190 text-left text-sm">
             <thead className="bg-[#EEF4FF] text-[#17324F]">
               <tr>
                 <th className="px-5 py-4">Document Name</th>

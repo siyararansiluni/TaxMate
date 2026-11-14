@@ -71,7 +71,7 @@ function TaxPayerDashboard() {
     <div className="space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       {/* Heading */}
       <header>
-        <h1 className="text-3xl font-bold tracking-tight text-[#173453]">Dashboard</h1>
+        <h1 className="text-[28px] font-bold tracking-tight text-[#173453]">Dashboard</h1>
         <p className="mt-1.5 text-sm text-slate-500">
           Welcome back, Kamal! Here is your financial overview.
         </p>

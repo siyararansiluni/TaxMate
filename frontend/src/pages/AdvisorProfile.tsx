@@ -145,7 +145,7 @@ function AdvisorProfile() {
           </svg>
           Back to advisors
         </Link>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#173453]">Advisor Profile</h1>
+        <h1 className="mt-3 text-[28px] font-bold tracking-tight text-[#173453]">Advisor Profile</h1>
         <p className="mt-1.5 text-sm text-slate-500">
           View advisor details and get in touch for tax consultation.
         </p>

@@ -63,7 +63,7 @@ function FindTaxAdvisor() {
   return (
     <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight text-[#173453]">Find a Tax Advisor</h1>
+        <h1 className="text-[28px] font-bold tracking-tight text-[#173453]">Find a Tax Advisor</h1>
         <p className="mt-1.5 text-sm text-slate-500">
           Explore advisor profiles and contact a professional.
         </p>

@@ -46,7 +46,7 @@ function Sidebar({ open = false, onClose }: SidebarProps) {
       )}
 
       <aside
-  className={`flex h-full w-56 shrink-0 flex-col border-r border-blue-200 bg-[#DCEAF8]
+  className={`flex h-full w-54 shrink-0 flex-col border-r border-blue-200 bg-[#DCEAF8]
     max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:h-dvh max-lg:transition-transform max-lg:duration-200 motion-reduce:transition-none
     ${open ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}`}
 >
@@ -69,7 +69,7 @@ function Sidebar({ open = false, onClose }: SidebarProps) {
 
         <nav aria-label="Main" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-4 py-2">
           {NAV_ITEMS.map((item) => (
-            <NavLink key={item.to} to={item.to} className={linkClass}>
+            <NavLink key={item.to} to={item.to} className={linkClass} onClick={onClose}>
               {item.label}
             </NavLink>
           ))}

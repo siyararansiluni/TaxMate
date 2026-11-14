@@ -274,7 +274,7 @@ function MyProfile() {
   return (
       <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#173453]">Complete Tax Profile</h1>
+          <h1 className="text-[28px] font-bold tracking-tight text-[#173453]">Complete Tax Profile</h1>
           <p className="mt-1.5 text-sm text-slate-500">
             Manage your personal information and tax profile.
           </p>

@@ -30,11 +30,10 @@ function TaxpayerLayout() {
   const initial = getSession()?.name?.charAt(0).toUpperCase() ?? 'K'
 
   // Every new page starts at the top, and the mobile drawer closes
-  useEffect(() => {
-    contentRef.current?.scrollTo({ top: 0 })
-    setMenuOpen(false)
-  }, [pathname])
-
+  // Every new page starts at the top
+useEffect(() => {
+  contentRef.current?.scrollTo({ top: 0 })
+}, [pathname])
   return (
     // Locked to the screen height: the browser page itself never scrolls
     <div className="flex h-dvh overflow-hidden bg-slate-50">
@@ -50,7 +49,7 @@ function TaxpayerLayout() {
         {/* Only this area scrolls */}
         <main
           ref={contentRef}
-          className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex-1 overflow-y-auto [scrollbar:none] [&::-webkit-scrollbar]:hidden"
         >
           <Outlet />
         </main>

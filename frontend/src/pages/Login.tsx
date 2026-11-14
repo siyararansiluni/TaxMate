@@ -268,7 +268,7 @@ export default function Login() {
   };
 
   return (
-    <main className="relative min-h-dvh w-full overflow-x-hidden bg-linear-to-br from-white via-blue-50 to-blue-200 font-sans text-slate-800 lg:h-dvh lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <main className="relative min-h-dvh w-full overflow-x-hidden bg-linear-to-br from-white via-blue-50 to-blue-200 font-sans text-slate-800 lg:h-dvh lg:overflow-y-auto [scrollbar:none] [&::-webkit-scrollbar]:hidden">
       {/* background shapes */}
       <div className="pointer-events-none absolute -right-40 -top-40 h-160 w-160 rounded-full bg-blue-300/40 blur-3xl" />
       <div className="pointer-events-none absolute -left-40 top-1/3 h-130 w-130 rounded-full bg-sky-200/50 blur-3xl" />
