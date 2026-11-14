@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ADVISORS } from '../data/Advisors'
 
@@ -43,22 +43,37 @@ const ArrowIcon = () => (
   </Icon>
 )
 
+/** True if any word in the text starts with what the user typed. */
+function wordStartsWith(text: string, q: string) {
+  return text
+    .toLowerCase()
+    .split(/[\s.,\-/&]+/)
+    .some((word) => word.startsWith(q))
+}
+
 function FindTaxAdvisor() {
   const [query, setQuery] = useState('')
   const [spec, setSpec] = useState(ALL)
-  // filters apply when "Search" is pressed (or Enter)
-  const [applied, setApplied] = useState({ query: '', spec: ALL })
 
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault()
-    setApplied({ query: query.trim().toLowerCase(), spec })
-  }
+  // Live search: the list updates on every keystroke, no button needed
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase()
 
-  const results = ADVISORS.filter(
-    (a) =>
-      (applied.spec === ALL || a.specialization === applied.spec) &&
-      `${a.name} ${a.specialization}`.toLowerCase().includes(applied.query),
-  )
+    return ADVISORS.filter((a) => {
+      const matchesSpec = spec === ALL || a.specialization === spec
+      const matchesQuery = !q || wordStartsWith(a.name, q) || wordStartsWith(a.specialization, q)
+      return matchesSpec && matchesQuery
+    }).sort((a, b) => {
+      // advisors whose name starts with the typed text come first
+      if (!q) return 0
+      const aFirst = a.name.toLowerCase().startsWith(q) ? 0 : 1
+      const bFirst = b.name.toLowerCase().startsWith(q) ? 0 : 1
+      return aFirst - bFirst
+    })
+  }, [query, spec])
+
+  // The Search button / Enter key just keeps the page from reloading
+  const handleSubmit = (e: FormEvent) => e.preventDefault()
 
   return (
     <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -71,7 +86,7 @@ function FindTaxAdvisor() {
 
       {/* Filters grouped in one card */}
       <form
-        onSubmit={handleSearch}
+        onSubmit={handleSubmit}
         className="grid items-end gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[2fr_1fr_auto]"
       >
         <div>
@@ -84,19 +99,44 @@ function FindTaxAdvisor() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or specialization"
+            autoComplete="off"
             className={inputClass}
           />
         </div>
+
         <div>
           <label htmlFor="advisor-spec" className="mb-1.5 block text-sm font-medium text-[#173453]">
             Specialization
           </label>
-          <select id="advisor-spec" value={spec} onChange={(e) => setSpec(e.target.value)} className={inputClass}>
-            {SPECIALIZATIONS.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
+
+          {/* relative wrapper keeps the custom arrow inside the field */}
+          <div className="relative">
+            <select
+              id="advisor-spec"
+              value={spec}
+              onChange={(e) => setSpec(e.target.value)}
+              className={`${inputClass} appearance-none pr-11`}
+            >
+              {SPECIALIZATIONS.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
         </div>
+
         <button
           type="submit"
           className="h-10 rounded-md bg-blue-600 px-8 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
@@ -160,8 +200,6 @@ function FindTaxAdvisor() {
             ))}
           </div>
         )}
-
-        
       </section>
     </div>
   )
