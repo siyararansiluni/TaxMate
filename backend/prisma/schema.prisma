@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -303,6 +304,8 @@ model taxpayer_employments {
   start_date        DateTime?         @db.Date
   end_date          DateTime?         @db.Date
   created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  job_title         String?           @db.VarChar(150)
+  employer_address  String?           @db.VarChar(255)
   income_records    income_records[]
   tax_periods       tax_periods       @relation(fields: [tax_period_id], references: [tax_period_id], onDelete: NoAction, onUpdate: NoAction)
   taxpayer_profiles taxpayer_profiles @relation(fields: [taxpayer_id], references: [taxpayer_id], onDelete: NoAction, onUpdate: NoAction)
@@ -311,26 +314,32 @@ model taxpayer_employments {
 }
 
 model taxpayer_profiles {
-  taxpayer_id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id              String                 @unique @db.Uuid
-  tin                  String?                @unique @db.VarChar(30)
-  full_name            String                 @db.VarChar(150)
-  date_of_birth        DateTime?              @db.Date
-  contact_number       String?                @db.VarChar(20)
-  address_line         String?                @db.VarChar(255)
-  city                 String?                @db.VarChar(100)
-  district             String?                @db.VarChar(100)
-  postal_code          String?                @db.VarChar(20)
-  created_at           DateTime               @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
-  deduction_records    deduction_records[]
-  documents            documents[]
-  expense_records      expense_records[]
-  income_records       income_records[]
-  tax_calculations     tax_calculations[]
-  tax_returns          tax_returns[]
-  taxpayer_employments taxpayer_employments[]
-  users                users                  @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  taxpayer_id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                    String                 @unique @db.Uuid
+  tin                        String?                @unique @db.VarChar(30)
+  full_name                  String                 @db.VarChar(150)
+  date_of_birth              DateTime?              @db.Date
+  contact_number             String?                @db.VarChar(20)
+  address_line               String?                @db.VarChar(255)
+  city                       String?                @db.VarChar(100)
+  district                   String?                @db.VarChar(100)
+  postal_code                String?                @db.VarChar(20)
+  created_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  nic                        String?                @unique(map: "uq_taxpayer_profiles_nic", where: raw("(nic IS NOT NULL)")) @db.VarChar(20)
+  gender                     String?                @db.VarChar(20)
+  alternative_contact_number String?                @db.VarChar(20)
+  address_line_2             String?                @db.VarChar(255)
+  province                   String?                @db.VarChar(100)
+  residency_status           String?                @db.VarChar(30)
+  deduction_records          deduction_records[]
+  documents                  documents[]
+  expense_records            expense_records[]
+  income_records             income_records[]
+  tax_calculations           tax_calculations[]
+  tax_returns                tax_returns[]
+  taxpayer_employments       taxpayer_employments[]
+  users                      users                  @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model user_roles {
