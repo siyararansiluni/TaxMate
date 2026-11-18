@@ -16,6 +16,10 @@ import AdvisorProfile from '../pages/AdvisorProfile'
 import TaxpayerLayout from '../layouts/TaxpayerLayout'
 import ProtectedRoute from './ProtectedRoute'
 
+
+import AdvisorLayout from '../layouts/AdvisorLayout'
+import AdvisorDashboard from '../pages/AdvisorDashboard'
+
 function AppRoutes() {
   return (
     <Routes>
@@ -40,14 +44,20 @@ function AppRoutes() {
           <Route path="/tax-advisor/:advisorId" element={<AdvisorProfile />} />
         </Route>
       </Route>
-
-      {/* Tax advisor only (replace ComingSoon with the real page later) */}
-      <Route element={<ProtectedRoute allowedRoles={['ADVISOR']} />}>
-        <Route
-          path="/advisor/dashboard"
-          element={<ComingSoon title="Tax Advisor Dashboard" />}
-        />
-      </Route>
+      {/* Tax advisor only: advisor sidebar layout */}
+<Route element={<ProtectedRoute allowedRoles={['ADVISOR']} />}>
+  <Route element={<AdvisorLayout />}>
+    <Route path="/advisor/dashboard" element={<AdvisorDashboard />} />
+    <Route
+      path="/advisor/profile"
+      element={<ComingSoon title="My Advisor Profile" />}
+    />
+    <Route
+      path="/advisor/clients"
+      element={<ComingSoon title="Assigned Clients" />}
+    />
+  </Route>
+</Route>
 
       {/* Administrator only (replace ComingSoon with the real page later) */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
