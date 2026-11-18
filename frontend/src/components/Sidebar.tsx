@@ -1,13 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { clearSession } from "../auth/session";
 
+export interface NavItem {
+  label: string
+  to: string
+}
+
 interface SidebarProps {
   open?: boolean // drawer state on phones/tablets
   onClose?: () => void
+  items?: NavItem[] // menu links; defaults to the taxpayer menu
 }
 
 // KEEP YOUR EXISTING PATHS if they differ from these
-const NAV_ITEMS = [
+const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Income Management', to: '/income' },
   { label: 'Expenses & Deductions', to: '/expenses' },
@@ -30,13 +36,13 @@ const LogoutIcon = () => (
   </svg>
 )
 
-function Sidebar({ open = false, onClose }: SidebarProps) {
+function Sidebar({ open = false, onClose, items = NAV_ITEMS }: SidebarProps) {
   const navigate = useNavigate()
 
   const handleLogout = () => {
-  clearSession();
-  navigate("/login", { replace: true });
-};
+    clearSession();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <>
@@ -46,10 +52,10 @@ function Sidebar({ open = false, onClose }: SidebarProps) {
       )}
 
       <aside
-  className={`flex h-full w-54 shrink-0 flex-col border-r border-blue-200 bg-[#DCEAF8]
-    max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:h-dvh max-lg:transition-transform max-lg:duration-200 motion-reduce:transition-none
-    ${open ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}`}
->
+        className={`flex h-full w-54 shrink-0 flex-col border-r border-blue-200 bg-[#DCEAF8]
+          max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:h-dvh max-lg:transition-transform max-lg:duration-200 motion-reduce:transition-none
+          ${open ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'}`}
+      >
 
         <button
           type="button"
@@ -68,7 +74,7 @@ function Sidebar({ open = false, onClose }: SidebarProps) {
         </div>
 
         <nav aria-label="Main" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-4 py-2">
-          {NAV_ITEMS.map((item) => (
+          {items.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkClass} onClick={onClose}>
               {item.label}
             </NavLink>
