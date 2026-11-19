@@ -1,7 +1,8 @@
 import { useId, useState, type FormEvent, type ReactNode } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { authenticate } from "../data/mockUsers";
 import { getSession, homePaths, saveSession } from "../auth/session";
+import AccountTypeModal from "../components/AccountTypeModal";
 
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
@@ -230,12 +231,21 @@ function Illustration() {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
+
+  // Opens the account type popup. It also opens automatically when the user
+  // comes back from a registration page via "← Back to account type".
+  const [showAccountType, setShowAccountType] = useState(
+    Boolean(
+      (location.state as { openAccountType?: boolean } | null)?.openAccountType
+    )
+  );
 
   // Already logged in? Skip the login page.
   const existing = getSession();
@@ -263,6 +273,7 @@ export default function Login() {
     );
 
     navigate(user.destination, {
+      replace: true,
       state: { role: user.role, email: user.email, label: user.name },
     });
   };
@@ -478,23 +489,29 @@ export default function Login() {
                 </button>
               </form>
 
-              {/* Add a /register route when you build that page */}
               <p className="mt-[clamp(0.75rem,2.4dvh,1.5rem)] text-center text-base text-slate-800">
                 Don&apos;t have an account?{" "}
-                <Link
-                  to="/register"
+                <button
+                  type="button"
+                  onClick={() => setShowAccountType(true)}
                   className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline"
                 >
                   Create Account
                   <Icon className="h-4 w-4">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </Icon>
-                </Link>
+                </button>
               </p>
             </div>
           </div>
         </section>
       </div>
+
+      {/* "Choose your account type" popup */}
+      <AccountTypeModal
+        open={showAccountType}
+        onClose={() => setShowAccountType(false)}
+      />
     </main>
   );
 }
