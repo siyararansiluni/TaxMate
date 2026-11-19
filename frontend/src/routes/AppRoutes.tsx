@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 
+import RegisterTaxpayer from '../pages/RegisterTaxpayer'
+import RegisterAdvisor from '../pages/RegisterAdvisor'
+
 import Home from '../pages/Home'
 import Login from '../pages/Login'
 import ComingSoon from '../pages/ComingSoon'
@@ -29,6 +32,10 @@ function AppRoutes() {
       {/* Public pages */}
       <Route path="/login" element={<Login />} />
       <Route path="/home" element={<Home />} />
+
+      <Route path="/register" element={<Navigate to="/login" replace state={{ openAccountType: true }} />} />
+<Route path="/register/taxpayer" element={<RegisterTaxpayer />} />
+<Route path="/register/advisor" element={<RegisterAdvisor />} />
 
       {/* Taxpayer only: shared sidebar layout */}
       <Route element={<ProtectedRoute allowedRoles={['TAXPAYER']} />}>
