@@ -17,7 +17,7 @@ import FindTaxAdvisor from '../pages/FindTaxAdvisor'
 import AdvisorProfile from '../pages/AdvisorProfile'
 
 import TaxpayerLayout from '../layouts/TaxpayerLayout'
-import ProtectedRoute from './ProtectedRoute'
+
 
 
 import AdvisorLayout from '../layouts/AdvisorLayout'
@@ -38,7 +38,7 @@ function AppRoutes() {
 <Route path="/register/advisor" element={<RegisterAdvisor />} />
 
       {/* Taxpayer only: shared sidebar layout */}
-      <Route element={<ProtectedRoute allowedRoles={['TAXPAYER']} />}>
+      
         <Route element={<TaxpayerLayout />}>
           <Route path="/dashboard" element={<TaxPayerDashboard />} />
           <Route path="/profile" element={<MyProfile />} />
@@ -49,10 +49,10 @@ function AppRoutes() {
           <Route path="/documents" element={<Documents />} />
           <Route path="/tax-advisor" element={<FindTaxAdvisor />} />
           <Route path="/tax-advisor/:advisorId" element={<AdvisorProfile />} />
-        </Route>
+        
       </Route>
       {/* Tax advisor only: advisor sidebar layout */}
-<Route element={<ProtectedRoute allowedRoles={['ADVISOR']} />}>
+
   <Route element={<AdvisorLayout />}>
     <Route path="/advisor/dashboard" element={<AdvisorDashboard />} />
     <Route
@@ -63,19 +63,19 @@ function AppRoutes() {
       path="/advisor/clients"
       element={<ComingSoon title="Assigned Clients" />}
     />
-  </Route>
+ 
 </Route>
 
       {/* Administrator only (replace ComingSoon with the real page later) */}
-      <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+      
         <Route
           path="/admin/dashboard"
           element={<ComingSoon title="Administrator Dashboard" />}
         />
-      </Route>
+      
 
-      {/* Any unknown URL goes back to login */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      
+      
     </Routes>
   )
 }
