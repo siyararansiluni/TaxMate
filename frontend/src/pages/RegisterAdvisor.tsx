@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 import RegisterLayout from '../components/RegisterLayout'
 import { Field, PasswordField, SelectField } from '../components/FormFields'
-
 type Form = {
   name: string
   email: string
@@ -48,10 +47,15 @@ export default function RegisterAdvisor() {
   const [form, setForm] = useState<Form>(empty)
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({})
   const [success, setSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState("")
 
   useEffect(() => {
     if (!success) return
-    const t = setTimeout(() => navigate('/login', { replace: true }), 1800)
+    const t = setTimeout(
+      () => navigate('/login', { replace: true, state: { taxmateRole: 'ADVISOR' } }),
+      1800
+    )
     return () => clearTimeout(t)
   }, [success, navigate])
 
@@ -61,14 +65,45 @@ export default function RegisterAdvisor() {
   const setValue = (key: keyof Form) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const found = validate(form)
     setErrors(found)
+    setSubmitError("")
     if (Object.keys(found).length > 0) return
+    setIsSubmitting(true)
 
-    // TODO: call the backend register API here when it is ready.
-    setSuccess(true)
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/register/advisor`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: form.name.trim(),
+            email: form.email.trim(),
+            phone: form.phone.replace(/\s/g, ""),
+            qualification: form.qualification,
+            license: form.license.trim(),
+            experience: form.experience,
+            password: form.password,
+          }),
+        }
+      )
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || "Unable to create account.")
+      }
+
+      setSuccess(true)
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to create account."
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -110,10 +145,15 @@ export default function RegisterAdvisor() {
             ✓ Account created successfully! Taking you to login…
           </p>
         )}
+        {submitError && (
+          <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700">
+            {submitError}
+          </p>
+        )}
 
         <button
           type="submit"
-          disabled={success}
+          disabled={success || isSubmitting}
           // the Create account button: change py-3 to this
 className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 disabled:opacity-60"
         >

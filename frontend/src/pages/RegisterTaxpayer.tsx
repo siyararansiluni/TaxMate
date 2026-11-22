@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 import RegisterLayout from '../components/RegisterLayout'
 import { Field, PasswordField } from '../components/FormFields'
-
 type Form = {
   name: string
   email: string
@@ -31,11 +30,16 @@ export default function RegisterTaxpayer() {
   const [form, setForm] = useState<Form>(empty)
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({})
   const [success, setSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState("")
 
   // After success, show the message briefly, then go to login
   useEffect(() => {
     if (!success) return
-    const t = setTimeout(() => navigate('/login', { replace: true }), 1800)
+    const t = setTimeout(
+      () => navigate('/login', { replace: true, state: { taxmateRole: 'TAXPAYER' } }),
+      1800
+    )
     return () => clearTimeout(t)
   }, [success, navigate])
 
@@ -43,14 +47,43 @@ export default function RegisterTaxpayer() {
     (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }))
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const found = validate(form)
     setErrors(found)
+    setSubmitError("")
     if (Object.keys(found).length > 0) return
+    setIsSubmitting(true)
 
-    // TODO: call the backend register API here when it is ready.
-    setSuccess(true)
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: form.name.trim(),
+            email: form.email.trim(),
+            nic: form.nic.trim(),
+            password: form.password,
+            confirm_password: form.confirm,
+          }),
+        }
+      )
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || "Unable to create account.")
+      }
+
+      setSuccess(true)
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to create account."
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -85,10 +118,15 @@ export default function RegisterTaxpayer() {
             ✓ Account created successfully! Taking you to login…
           </p>
         )}
+        {submitError && (
+          <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700">
+            {submitError}
+          </p>
+        )}
 
         <button
           type="submit"
-          disabled={success}
+          disabled={success || isSubmitting}
           className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 disabled:opacity-60"
         >
           Create account

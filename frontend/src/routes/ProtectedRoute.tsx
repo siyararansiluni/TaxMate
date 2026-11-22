@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { getSession, homePaths } from "../auth/session";
+import { useAuth } from "../auth/useAuth";
+import { homePaths } from "../auth/session";
 import type { Role } from "../data/mockUsers";
 
 /**
@@ -13,15 +14,27 @@ export default function ProtectedRoute({
 }: {
   allowedRoles: Role[];
 }) {
-  const session = getSession();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (!session) {
+  if (isLoading) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">
+        <p className="text-sm font-medium text-slate-600">
+          Checking your account...
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (!allowedRoles.includes(session.role)) {
-    return <Navigate to={homePaths[session.role]} replace />;
+  const role = user.roles[0];
+
+  if (!role || !allowedRoles.includes(role)) {
+    return <Navigate to={role && homePaths[role] ? homePaths[role] : "/login"} replace />;
   }
 
   return <Outlet />;

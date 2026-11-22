@@ -1,5 +1,3 @@
-
-
 import "dotenv/config";
 
 const auth0Domain = process.env.AUTH0_M2M_DOMAIN;

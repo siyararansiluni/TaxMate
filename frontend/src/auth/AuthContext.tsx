@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useCallback,
@@ -7,11 +6,11 @@ import {
   type ReactNode,
 } from "react";
 
-import { useAuth0 } from "@auth0/auth0-react";
 import type { Role } from "../data/mockUsers";
+import { clearSession, getAccessToken, saveSession } from "./session";
 
 export interface TaxMateUser {
-  user_id: number;
+  user_id: string;
   email: string;
   roles: Role[];
   taxpayer_profile: {
@@ -34,28 +33,15 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const {
-    isAuthenticated,
-    isLoading: isAuth0Loading,
-    getAccessTokenSilently,
-    error: auth0Error,
-  } = useAuth0();
-
   const [user, setUser] = useState<TaxMateUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log("Auth0 authentication state:", {
-    isAuthenticated,
-    isAuth0Loading,
-    auth0Error,
-  });
-
   const refreshUser = useCallback(async () => {
-    if (!isAuthenticated) {
+    const accessToken = getAccessToken();
+
+    if (!accessToken) {
       setUser(null);
       setError(null);
       setIsLoading(false);
@@ -66,41 +52,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const accessToken = await getAccessTokenSilently();
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       const result = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          clearSession();
+        }
         throw new Error(
-          result.message || "Unable to retrieve your TaxMate account."
+          result.message || "Unable to retrieve the authenticated user."
         );
       }
 
-      setUser(result.data as TaxMateUser);
+      const authenticatedUser = result.data as TaxMateUser;
+      const role = authenticatedUser.roles[0];
+
+      if (role) {
+        saveSession(
+          {
+            email: authenticatedUser.email,
+            name:
+              authenticatedUser.taxpayer_profile?.full_name ||
+              authenticatedUser.advisor_profile?.qualifications ||
+              "TaxMate User",
+            role,
+          },
+          false
+        );
+      }
+
+      setUser(authenticatedUser);
     } catch (err) {
       setUser(null);
-
       setError(
         err instanceof Error
           ? err.message
-          : "Something went wrong while loading your account."
+          : "Unable to retrieve the authenticated user."
       );
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, []);
 
   useEffect(() => {
-    if (isAuth0Loading) return;
-
     let cancelled = false;
 
     Promise.resolve().then(() => {
@@ -112,14 +114,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [isAuth0Loading, refreshUser]);
+  }, [refreshUser]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading: isAuth0Loading || isLoading,
-        error: error || auth0Error?.message || null,
+        isLoading,
+        error,
         refreshUser,
       }}
     >

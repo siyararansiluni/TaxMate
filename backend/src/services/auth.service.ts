@@ -9,6 +9,7 @@ import {
 
 import type {
   RegisterInput,
+  RegisterAdvisorInput,
   LoginInput,
 } from "../validators/auth.validator.js";
 
@@ -107,6 +108,95 @@ const auth0UserId = await createAuth0User({
     });
 
     return result;
+  } catch (error) {
+    try {
+      await deleteAuth0User(auth0UserId);
+    } catch (cleanupError) {
+      console.error("Failed to clean up Auth0 user:", cleanupError);
+    }
+
+    throw error;
+  }
+}
+
+// ========================================
+// REGISTER ADVISOR
+// ========================================
+
+export async function registerAdvisor(input: RegisterAdvisorInput) {
+  const existingUser = await prisma.users.findFirst({
+    where: {
+      email: {
+        equals: input.email,
+        mode: "insensitive",
+      },
+    },
+  });
+
+  if (existingUser) {
+    throw new Error("An account with this email already exists");
+  }
+
+  const advisorRole = await prisma.roles.findUnique({
+    where: {
+      role_name: "ADVISOR",
+    },
+  });
+
+  if (!advisorRole) {
+    throw new Error("ADVISOR role not found in database");
+  }
+
+  const auth0UserId = await createAuth0User({
+    email: input.email,
+    password: input.password,
+    full_name: input.full_name,
+  });
+
+  const experienceYears: Record<string, number> = {
+    "Less than 1 year": 0,
+    "1–3 years": 2,
+    "3–5 years": 4,
+    "5–10 years": 7,
+    "10+ years": 10,
+  };
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.users.create({
+        data: {
+          auth0_user_id: auth0UserId,
+          email: input.email,
+          account_status: "ACTIVE",
+        },
+      });
+
+      await tx.user_roles.create({
+        data: {
+          user_id: user.user_id,
+          role_id: advisorRole.role_id,
+        },
+      });
+
+      const profile = await tx.advisor_profiles.create({
+        data: {
+          user_id: user.user_id,
+          phone: input.phone,
+          qualifications: input.qualification,
+          experience_years: experienceYears[input.experience] ?? null,
+          specialization: input.qualification,
+          bio: `License / registration number: ${input.license}`,
+        },
+      });
+
+      return {
+        user_id: user.user_id,
+        email: user.email,
+        full_name: input.full_name,
+        role: "ADVISOR",
+        advisor_profile: profile,
+      };
+    });
   } catch (error) {
     try {
       await deleteAuth0User(auth0UserId);

@@ -1,16 +1,15 @@
 import {
   useId,
   useState,
-  useEffect,
   type FormEvent,
   type ReactNode,
 } from "react";
 
-import { useAuth0 } from "@auth0/auth0-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { homePaths, saveAccessToken, saveSession } from "../auth/session";
 import { useAuth } from "../auth/useAuth";
-import { homePaths } from "../auth/session";
+import type { Role } from "../data/mockUsers";
 
 import AccountTypeModal from "../components/AccountTypeModal";
 /* ------------------------------------------------------------------ */
@@ -295,39 +294,12 @@ function Illustration() {
 export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const {
-    loginWithRedirect,
-    isLoading: isAuth0Loading,
-    isAuthenticated,
-  } = useAuth0();
-
-  const {
-    user,
-    isLoading: isProfileLoading,
-    error: profileError,
-  } = useAuth();
-
-  useEffect(() => {
-  if (isAuth0Loading || isProfileLoading) return;
-
-  if (isAuthenticated && user) {
-    const userRole = user.roles[0];
-
-    if (userRole && homePaths[userRole]) {
-      navigate(homePaths[userRole], { replace: true });
-    }
-  }
-}, [
-  isAuth0Loading,
-  isProfileLoading,
-  isAuthenticated,
-  user,
-  navigate,
-]);
+  const { refreshUser } = useAuth();
 
   const [email, setEmail]   = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Opens the account type popup when returning from registration.
   const [showAccountType, setShowAccountType] = useState(
@@ -336,21 +308,76 @@ export default function Login() {
     )
   );
 
-  // Start authentication using Auth0 Universal Login.
+  // Authenticate through TaxMate's backend; Auth0 and PostgreSQL roles stay
+  // on the server side of this flow.
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     try {
-      await loginWithRedirect({
-  authorizationParams: {
-    login_hint: email.trim(),
-    prompt: "login",
-  },
-});
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
+        }
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Unable to sign in.");
+      }
+
+      const authenticatedUser = result.data.user as {
+        email: string;
+        roles: Role[];
+        taxpayer_profile: { full_name: string } | null;
+        advisor_profile: { qualifications: string | null } | null;
+      };
+      const role = authenticatedUser.roles[0];
+
+      if (!role || !homePaths[role]) {
+        throw new Error(
+          "This account does not have a valid TaxMate role."
+        );
+      }
+
+      saveAccessToken(
+        result.data.access_token,
+        result.data.expires_in
+      );
+
+      saveSession(
+        {
+          email: authenticatedUser.email,
+          name:
+            authenticatedUser.taxpayer_profile?.full_name ||
+            authenticatedUser.advisor_profile?.qualifications ||
+            "TaxMate User",
+          role,
+        },
+        false
+      );
+
+      sessionStorage.removeItem(
+        `taxmate_pending_role:${email.trim().toLowerCase()}`
+      );
+      await refreshUser();
+      navigate(homePaths[role], { replace: true });
     } catch (err) {
       console.error("Auth0 login error:", err);
-      setError("Unable to connect to Auth0. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to connect to Auth0. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -505,27 +532,42 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Auth0 password information */}
-                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-5 py-4">
-                  <p className="text-sm font-medium text-blue-900">
-                    Secure sign-in with Auth0
-                  </p>
+                {/* Password */}
+                <div>
+                  <label htmlFor="password" className="sr-only">
+                    Password
+                  </label>
 
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                    Your password will be entered securely on the Auth0 sign-in
-                    page.
-                  </p>
+                  <div className="flex items-center gap-3 rounded-full border border-blue-100 bg-white px-5 shadow-sm transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                    <span className="text-blue-900">
+                      <Icon>
+                        <rect x="5" y="11" width="14" height="10" rx="2" />
+                        <path d="M8 11V7a4 4 0 018 0v4" />
+                      </Icon>
+                    </span>
+
+                    <input
+                      id="password"
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                      className="min-w-0 flex-1 bg-transparent py-[clamp(0.55rem,1.7dvh,0.875rem)] text-base text-slate-800 placeholder-slate-500 outline-none"
+                    />
+                  </div>
                 </div>
 
-                {(error || profileError) && (
+                {error && (
   <p role="alert" className="text-center text-sm text-red-600">
-    {error || profileError}
+    {error}
   </p>
 )}
                 {/* Login button */}
                 <button
                   type="submit"
-                  disabled={isAuth0Loading || isProfileLoading}
+                  disabled={isSubmitting}
                   className="flex w-full items-center justify-center gap-3 rounded-full bg-linear-to-r from-blue-800 to-blue-500 py-[clamp(0.6rem,1.7dvh,0.875rem)] text-lg font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:from-blue-900 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Icon>

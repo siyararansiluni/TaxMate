@@ -3,12 +3,14 @@ import type { Request, Response } from "express";
 
 import {
   registerTaxpayer,
+  registerAdvisor as registerAdvisorAccount,
   getAuthenticatedUser,
   loginUser,
 } from "../services/auth.service.js";
 
 import {
   registerSchema,
+  registerAdvisorSchema,
   loginSchema,
 } from "../validators/auth.validator.js";
 
@@ -37,6 +39,52 @@ export async function register(req: Request, res: Response) {
     });
   } catch (error) {
     console.error("Registration error:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Registration failed";
+
+    if (
+      message.includes("already exists") ||
+      message.includes("already registered")
+    ) {
+      return res.status(409).json({
+        status: "error",
+        message,
+      });
+    }
+
+    return res.status(500).json({
+      status: "error",
+      message: "Registration failed. Please try again.",
+    });
+  }
+}
+
+// ========================================
+// REGISTER ADVISOR
+// ========================================
+
+export async function registerAdvisor(req: Request, res: Response) {
+  try {
+    const validation = registerAdvisorSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({
+        status: "error",
+        message: "Validation failed",
+        errors: validation.error.flatten().fieldErrors,
+      });
+    }
+
+    const result = await registerAdvisorAccount(validation.data);
+
+    return res.status(201).json({
+      status: "success",
+      message: "Advisor registered successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Advisor registration error:", error);
 
     const message =
       error instanceof Error ? error.message : "Registration failed";
