@@ -22,6 +22,7 @@ import ProtectedRoute from './ProtectedRoute'
 
 import AdvisorLayout from '../layouts/AdvisorLayout'
 import AdvisorDashboard from '../pages/AdvisorDashboard'
+import MyAdvisorProfile from '../pages/MyAdvisorProfile'
 
 function AppRoutes() {
   return (
@@ -55,10 +56,7 @@ function AppRoutes() {
 <Route element={<ProtectedRoute allowedRoles={['ADVISOR']} />}>
   <Route element={<AdvisorLayout />}>
     <Route path="/advisor/dashboard" element={<AdvisorDashboard />} />
-    <Route
-      path="/advisor/profile"
-      element={<ComingSoon title="My Advisor Profile" />}
-    />
+    <Route path="/advisor/profile" element={<MyAdvisorProfile />} />
     <Route
       path="/advisor/clients"
       element={<ComingSoon title="Assigned Clients" />}
