@@ -17,12 +17,12 @@ import FindTaxAdvisor from '../pages/FindTaxAdvisor'
 import AdvisorProfile from '../pages/AdvisorProfile'
 
 import TaxpayerLayout from '../layouts/TaxpayerLayout'
-import ProtectedRoute from './ProtectedRoute'
+
 
 
 import AdvisorLayout from '../layouts/AdvisorLayout'
+import ProtectedRoute from './ProtectedRoute'
 import AdvisorDashboard from '../pages/AdvisorDashboard'
-import MyAdvisorProfile from '../pages/MyAdvisorProfile'
 
 function AppRoutes() {
   return (
@@ -50,19 +50,24 @@ function AppRoutes() {
           <Route path="/documents" element={<Documents />} />
           <Route path="/tax-advisor" element={<FindTaxAdvisor />} />
           <Route path="/tax-advisor/:advisorId" element={<AdvisorProfile />} />
+        
         </Route>
       </Route>
       {/* Tax advisor only: advisor sidebar layout */}
-<Route element={<ProtectedRoute allowedRoles={['ADVISOR']} />}>
-  <Route element={<AdvisorLayout />}>
+
+  <Route element={<ProtectedRoute allowedRoles={['ADVISOR']} />}>
+    <Route element={<AdvisorLayout />}>
     <Route path="/advisor/dashboard" element={<AdvisorDashboard />} />
-    <Route path="/advisor/profile" element={<MyAdvisorProfile />} />
+    <Route
+      path="/advisor/profile"
+      element={<ComingSoon title="My Advisor Profile" />}
+    />
     <Route
       path="/advisor/clients"
       element={<ComingSoon title="Assigned Clients" />}
     />
+    </Route>
   </Route>
-</Route>
 
       {/* Administrator only (replace ComingSoon with the real page later) */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
@@ -71,9 +76,10 @@ function AppRoutes() {
           element={<ComingSoon title="Administrator Dashboard" />}
         />
       </Route>
+      
 
-      {/* Any unknown URL goes back to login */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      
+      
     </Routes>
   )
 }

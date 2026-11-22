@@ -6,7 +6,19 @@ import authRoutes from "./routes/auth.routes.js";
 const app = express();
 
 // Global middleware
-app.use(cors());
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  "http://localhost:5173"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+  })
+);
 app.use(express.json());
 
 

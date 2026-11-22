@@ -1,11 +1,22 @@
 
-
 import type { Request, Response } from "express";
+
 import {
   registerTaxpayer,
+  registerAdvisor as registerAdvisorAccount,
   getAuthenticatedUser,
+  loginUser,
 } from "../services/auth.service.js";
-import { registerSchema } from "../validators/auth.validator.js";
+
+import {
+  registerSchema,
+  registerAdvisorSchema,
+  loginSchema,
+} from "../validators/auth.validator.js";
+
+// ========================================
+// REGISTER TAXPAYER
+// ========================================
 
 export async function register(req: Request, res: Response) {
   try {
@@ -48,6 +59,118 @@ export async function register(req: Request, res: Response) {
     });
   }
 }
+
+// ========================================
+// REGISTER ADVISOR
+// ========================================
+
+export async function registerAdvisor(req: Request, res: Response) {
+  try {
+    const validation = registerAdvisorSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({
+        status: "error",
+        message: "Validation failed",
+        errors: validation.error.flatten().fieldErrors,
+      });
+    }
+
+    const result = await registerAdvisorAccount(validation.data);
+
+    return res.status(201).json({
+      status: "success",
+      message: "Advisor registered successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Advisor registration error:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Registration failed";
+
+    if (
+      message.includes("already exists") ||
+      message.includes("already registered")
+    ) {
+      return res.status(409).json({
+        status: "error",
+        message,
+      });
+    }
+
+    return res.status(500).json({
+      status: "error",
+      message: "Registration failed. Please try again.",
+    });
+  }
+}
+
+// ========================================
+// LOGIN
+// ========================================
+
+export async function login(req: Request, res: Response) {
+  try {
+    const validation = loginSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({
+        status: "error",
+        message: "Validation failed",
+        errors: validation.error.flatten().fieldErrors,
+      });
+    }
+
+    const result = await loginUser(validation.data);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Login successful",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Login failed";
+
+    if (
+      message.includes("User account not found")
+    ) {
+      return res.status(404).json({
+        status: "error",
+        message: "No TaxMate account is associated with this login.",
+      });
+    }
+
+    if (message.includes("Your account is not active")) {
+      return res.status(403).json({
+        status: "error",
+        message: "Your account is not active.",
+      });
+    }
+
+    if (
+      message.includes("Authentication failed") ||
+      message.includes("invalid_grant")
+    ) {
+      return res.status(401).json({
+        status: "error",
+        message: "Invalid email or password.",
+      });
+    }
+
+    return res.status(500).json({
+      status: "error",
+      message: "Login failed. Please try again.",
+    });
+  }
+}
+
+// ========================================
+// GET CURRENT USER
+// ========================================
 
 export async function getMe(req: Request, res: Response) {
   try {
