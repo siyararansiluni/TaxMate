@@ -9,6 +9,8 @@ const SERVICES = [
   { label: "Review of Tax Assessments", short: "Assessments" },
 ];
 
+
+
 const MAX_ABOUT = 300;
 
 export default function MyAdvisorProfile() {
@@ -32,6 +34,28 @@ export default function MyAdvisorProfile() {
   const [dirty, setDirty] = useState(false);
   const [showRegError, setShowRegError] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleCancel = () => {
+  setForm({
+    name: "S. Fernando",
+    email: "advisor@example.com",
+    phone: "077 187 6453",
+    qualification: "Chartered Accountant",
+    registration: "",
+    experience: "6",
+    location: "Colombo, Sri Lanka",
+    about:
+      "Experienced tax advisor providing comprehensive tax consultation services for individuals and small businesses.",
+  });
+  setSelected([
+    "Individual Tax Consultation",
+    "Tax Return Preparation",
+    "Tax Planning and Advisory",
+  ]);
+  setPhoto(null);
+  setDirty(false);
+  if (fileRef.current) fileRef.current.value = "";
+};
 
   const regInvalid = showRegError && !form.registration.trim();
 
@@ -188,6 +212,15 @@ export default function MyAdvisorProfile() {
           </div>
 
           <div className="ap-actions">
+
+            <button
+    type="button"
+    onClick={handleCancel}
+    className="rounded-md border border-slate-300 bg-white px-6 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+  >
+    Cancel
+  </button>
+
             <button type="submit" className="ap-save" disabled={!dirty}>
               Save profile
             </button>
@@ -277,9 +310,12 @@ const css = `
 .advisor-profile .ap-service:has(input:checked){background:var(--ap-soft);border-color:var(--ap-blue)}
 .advisor-profile .ap-service input{width:15px;height:15px;accent-color:var(--ap-blue);margin:0}
 .advisor-profile .ap-service span{font-size:12px}
-.advisor-profile .ap-actions{display:flex;justify-content:flex-end;margin-top:14px}
+.advisor-profile .ap-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:14px}
 .advisor-profile .ap-save{border:0;border-radius:8px;padding:11px 20px;font:inherit;font-size:12px;font-weight:600;color:#fff;background:var(--ap-blue);cursor:pointer}
-.advisor-profile .ap-save:disabled{background:#cbd5e1;cursor:not-allowed}
+.advisor-profile .ap-save:disabled {
+  background: var(--ap-blue);
+  cursor: not-allowed;
+}
 
 .advisor-profile .ap-side{display:flex;flex-direction:column;gap:20px}
 .advisor-profile .ap-status{background:#fffbe6;border:1px solid #f5dc7a;border-radius:12px;padding:14px}

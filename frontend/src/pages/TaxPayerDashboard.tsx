@@ -77,6 +77,46 @@ function TaxPayerDashboard() {
         </p>
       </header>
 
+
+{/* Accepted request notice — UI only */}
+<section
+  aria-label="Accepted advisor request"
+  className="flex flex-col gap-4 rounded-2xl border border-blue-300 bg-blue-50 p-5 sm:flex-row sm:items-center sm:justify-between"
+>
+  <div className="flex items-start gap-3">
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path d="m5 12 4 4L19 6" />
+      </svg>
+    </span>
+
+    <div>
+      <h2 className="font-semibold text-[#173453]">
+        Your request was accepted
+      </h2>
+      <p className="mt-1 text-sm text-slate-600">
+        AB Perera accepted your request. You can now message your advisor.
+      </p>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+  >
+    Message advisor
+  </button>
+</section>
+
       {/* Banner (light blue, as in Figma) */}
       <section className="rounded-2xl border border-blue-300 bg-blue-50 p-6 sm:p-7">
         <h2 className="text-xl font-semibold text-[#173453]">Complete your tax profile</h2>
