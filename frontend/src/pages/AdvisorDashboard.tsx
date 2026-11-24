@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const stats = [
   { label: 'Profile views', value: '128' },
   { label: 'Client enquiries', value: '08' },
@@ -31,7 +33,7 @@ const enquiries = [
 function AdvisorDashboard() {
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="text-2xl font-bold text-slate-900">Advisor Dashboard</h1>
+      <h1 className="text-[28px] font-bold text-slate-900">Advisor Dashboard</h1>
       <p className="mt-1 text-sm text-slate-500">
         Overview of your advisory profile and taxpayer enquiries.
       </p>
@@ -88,15 +90,27 @@ function AdvisorDashboard() {
       </div>
 
       {/* Profile reminder */}
-      <div className="mt-8 rounded-xl border border-[#5B84B1] bg-white p-5">
-        <p className="text-sm font-semibold text-slate-900">
-          Keep your advisor profile up to date
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          Your qualifications, experience and contact details help taxpayers
-          understand your services.
-        </p>
-      </div>
+      {/* Profile reminder */}
+<div className="mt-8 rounded-xl border border-[#5B84B1] bg-white p-5">
+  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p className="text-sm font-semibold text-slate-900">
+        Keep your advisor profile up to date
+      </p>
+      <p className="mt-2 text-xs text-slate-500">
+        Your qualifications, experience and contact details help taxpayers
+        understand your services.
+      </p>
+    </div>
+
+    <Link
+      to="/advisor/profile"
+      className="inline-flex shrink-0 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+    >
+      Edit profile
+    </Link>
+  </div>
+</div>
     </div>
   )
 }

@@ -16,13 +16,26 @@ const ACCOUNT_LABELS: Record<string, string> = {
 }
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-    strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+    aria-hidden
+  >
     {children}
   </svg>
 )
 
-function TopBar({ page, year = '2025 / 2026', initial = 'K', onMenuClick }: TopBarProps) {
+function TopBar({
+  page,
+  year = '2025 / 2026',
+  initial = 'K',
+  onMenuClick,
+}: TopBarProps) {
   const navigate = useNavigate()
   const session = getSession()
   const [open, setOpen] = useState(false)
@@ -38,12 +51,14 @@ function TopBar({ page, year = '2025 / 2026', initial = 'K', onMenuClick }: TopB
     const onClickOutside = (e: MouseEvent) => {
       if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false)
     }
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
 
     document.addEventListener('mousedown', onClickOutside)
     document.addEventListener('keydown', onKey)
+
     return () => {
       document.removeEventListener('mousedown', onClickOutside)
       document.removeEventListener('keydown', onKey)
@@ -52,7 +67,7 @@ function TopBar({ page, year = '2025 / 2026', initial = 'K', onMenuClick }: TopB
 
   const handleViewProfile = () => {
     setOpen(false)
-    navigate('/profile')
+     navigate(session?.role === 'ADVISOR' ? '/advisor/profile' : '/profile')
   }
 
   const handleLogout = () => {
@@ -71,18 +86,51 @@ function TopBar({ page, year = '2025 / 2026', initial = 'K', onMenuClick }: TopB
           aria-label="Open menu"
           className="rounded-md p-2 text-[#173453] hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:hidden"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-            strokeLinecap="round" className="h-5 w-5" aria-hidden>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            className="h-5 w-5"
+            aria-hidden
+          >
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+
         <p className="truncate text-[11px] text-slate-500">
-          TaxMate / <span className="font-medium text-slate-700">{page}</span>
+          TaxMate /{' '}
+          <span className="font-medium text-slate-700">{page}</span>
         </p>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] text-slate-600">{year}</span>
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] text-slate-600">
+          {year}
+        </span>
+
+        <button
+          type="button"
+          aria-label="Notifications"
+          className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-5 w-5"
+            aria-hidden
+          >
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+            <path d="M10 21h4" />
+          </svg>
+
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-white bg-red-500" />
+        </button>
 
         {/* Profile dropdown */}
         <div ref={wrapperRef} className="relative">
@@ -103,18 +151,23 @@ function TopBar({ page, year = '2025 / 2026', initial = 'K', onMenuClick }: TopB
               aria-label="Profile menu"
               className="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
             >
-              {/* user info */}
+              {/* User info */}
               <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
                   {initial}
                 </span>
+
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#173453]">{name}</p>
-                  <p className="truncate text-xs text-slate-500">{accountLabel}</p>
+                  <p className="truncate text-sm font-semibold text-[#173453]">
+                    {name}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {accountLabel}
+                  </p>
                 </div>
               </div>
 
-              {/* actions */}
+              {/* Actions */}
               <div className="p-2">
                 <button
                   type="button"

@@ -22,7 +22,11 @@ import TaxpayerLayout from '../layouts/TaxpayerLayout'
 
 import AdvisorLayout from '../layouts/AdvisorLayout'
 import ProtectedRoute from './ProtectedRoute'
+
 import AdvisorDashboard from '../pages/AdvisorDashboard'
+import MyAdvisorProfile from '../pages/MyAdvisorProfile'
+import AssignedClients from '../pages/AssignedClients' 
+import ClientDetail from '../pages/ClientDetail'
 
 function AppRoutes() {
   return (
@@ -60,12 +64,14 @@ function AppRoutes() {
     <Route path="/advisor/dashboard" element={<AdvisorDashboard />} />
     <Route
       path="/advisor/profile"
-      element={<ComingSoon title="My Advisor Profile" />}
-    />
+      element={<MyAdvisorProfile />} />
     <Route
       path="/advisor/clients"
-      element={<ComingSoon title="Assigned Clients" />}
-    />
+      element={<AssignedClients />} />
+    <Route
+      path="/advisor/clients/:clientId"
+      element={<ClientDetail />} />
+      
     </Route>
   </Route>
 
