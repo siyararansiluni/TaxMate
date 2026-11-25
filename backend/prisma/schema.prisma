@@ -114,6 +114,7 @@ model income_records {
   amount               Decimal               @db.Decimal(15, 2)
   income_date          DateTime              @db.Date
   description          String?
+  details Json @default("{}") @db.JsonB
   created_at           DateTime              @default(now()) @db.Timestamptz(6)
   updated_at           DateTime              @default(now()) @db.Timestamptz(6)
   income_categories    income_categories     @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
