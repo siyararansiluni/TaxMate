@@ -28,6 +28,10 @@ import MyAdvisorProfile from '../pages/MyAdvisorProfile'
 import AssignedClients from '../pages/AssignedClients' 
 import ClientDetail from '../pages/ClientDetail'
 
+import AdminDashboard from '../pages/AdminDashboard'
+import AdminLayout from '../layouts/AdminLayout'
+import UserManagement from '../pages/UserManagement'
+
 function AppRoutes() {
   return (
     <Routes>
@@ -77,11 +81,15 @@ function AppRoutes() {
 
       {/* Administrator only (replace ComingSoon with the real page later) */}
       <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
-        <Route
-          path="/admin/dashboard"
-          element={<ComingSoon title="Administrator Dashboard" />}
-        />
-      </Route>
+  <Route element={<AdminLayout />}>
+    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+    <Route path="/admin/users" element={<UserManagement />} />
+    <Route
+      path="/admin/tax-rules"
+      element={<ComingSoon title="Tax Rules Management" />}
+    />
+  </Route>
+</Route>
       
 
       
