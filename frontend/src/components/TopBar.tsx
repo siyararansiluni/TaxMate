@@ -67,7 +67,13 @@ function TopBar({
 
   const handleViewProfile = () => {
     setOpen(false)
-     navigate(session?.role === 'ADVISOR' ? '/advisor/profile' : '/profile')
+     navigate(
+  session?.role === 'ADVISOR'
+    ? '/advisor/profile'
+    : session?.role === 'ADMIN'
+      ? '/admin/dashboard'
+      : '/profile',
+)
   }
 
   const handleLogout = () => {
