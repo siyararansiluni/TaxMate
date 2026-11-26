@@ -3,6 +3,8 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
 
+import adminRoutes from "./routes/admin.routes.js";
+
 const app = express();
 
 // Global middleware
@@ -31,5 +33,7 @@ app.get("/health", (_req, res) => {
     message: "TaxMate backend is running",
   });
 });
+
+app.use("/api/admin", adminRoutes);
 
 export default app;
