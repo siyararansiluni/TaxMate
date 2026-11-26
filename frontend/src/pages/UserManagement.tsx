@@ -1,6 +1,14 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 
-type UserRole = 'Tax Payer' | 'Tax Advisor'
+import { getAccessToken } from '../auth/session'
+
+type UserRole = 'Tax Payer' | 'Tax Advisor' 
 type AccountStatus = 'Active' | 'Pending Approval' | 'Deactivated'
 type RoleFilter = 'All roles' | UserRole
 
@@ -12,45 +20,118 @@ interface User {
   status: AccountStatus
 }
 
-const initialUsers: User[] = [
-  {
-    id: 'user-1',
-    name: 'Kamal Perera',
-    email: 'taxpayer@example.com',
-    role: 'Tax Payer',
-    status: 'Active',
-  },
-  {
-    id: 'user-2',
-    name: 'S.Fernando',
-    email: 's.fernando@example.com',
-    role: 'Tax Advisor',
-    status: 'Active',
-  },
-  {
-    id: 'user-3',
-    name: 'Nimali Silva',
-    email: 'nimali@example.com',
-    role: 'Tax Payer',
-    status: 'Active',
-  },
-  {
-    id: 'user-4',
-    name: 'D.Jayasinghe',
-    email: 'dj@example.com',
-    role: 'Tax Advisor',
-    status: 'Pending Approval',
-  },
-]
+interface ApiUser {
+  user_id: string
+  email: string
+  account_status: string
+  user_roles: { roles: { role_name: string } }[]
+  taxpayer_profiles: { full_name: string } | null
+  advisor_profiles: { qualifications: string | null } | null
+}
+
+interface AdminUsersResponse {
+  message: string
+  data: ApiUser[]
+}
+
+function mapApiUser(user: ApiUser): User {
+  const roleNames: Record<string, UserRole> = {
+    TAXPAYER: 'Tax Payer',
+    ADVISOR: 'Tax Advisor',}
+   
+
+  const statusNames: Record<string, AccountStatus> = {
+    ACTIVE: 'Active',
+    PENDING: 'Pending Approval',
+    PENDING_APPROVAL: 'Pending Approval',
+    DEACTIVATED: 'Deactivated',
+  }
+
+  const role = roleNames[user.user_roles[0]?.roles.role_name]
+  const status = statusNames[user.account_status.toUpperCase()]
+
+  if (!role || !status) {
+    throw new Error(
+      `Unsupported user role or account status for ${user.email}`,
+    )
+  }
+
+  return {
+    id: user.user_id,
+    name: user.taxpayer_profiles?.full_name || user.email.split('@')[0],
+    email: user.email,
+    role,
+    status,
+  }
+}
 
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>(initialUsers)
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [searchDraft, setSearchDraft] = useState('')
   const [roleDraft, setRoleDraft] = useState<RoleFilter>('All roles')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [appliedRole, setAppliedRole] = useState<RoleFilter>('All roles')
   const [viewingUser, setViewingUser] = useState<User | null>(null)
   const [managingUser, setManagingUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadUsers() {
+      const accessToken = getAccessToken()
+
+      if (!accessToken) {
+        setLoadError('Sign in as an admin to view users.')
+        setLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/api/admin/users`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        )
+        const result = (await response.json()) as AdminUsersResponse
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Unable to load users.')
+        }
+
+        const loadedUsers = result.data
+  .filter(
+    (user) =>
+      !user.user_roles.some(({ roles }) => roles.role_name === 'ADMIN'),
+  )
+  .map(mapApiUser)
+
+        if (!cancelled) {
+          setUsers(loadedUsers)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error ? error.message : 'Unable to load users.',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadUsers()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!viewingUser && !managingUser) return
@@ -151,37 +232,40 @@ export default function UserManagement() {
           </div>
 
           <div className="relative">
-  <select
-    id="role-filter"
-    value={roleDraft}
-    onChange={(event) => {
-      const role = event.target.value
-      if (
-        role === 'All roles' ||
-        role === 'Tax Payer' ||
-        role === 'Tax Advisor'
-      ) {
-        setRoleDraft(role)
-      }
-    }}
-    className="h-10 w-full appearance-none rounded-md border border-[#5B84B1] bg-white px-3 pr-10 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200"
-  >
-    <option value="All roles">All roles</option>
-    <option value="Tax Payer">Tax Payer</option>
-    <option value="Tax Advisor">Tax Advisor</option>
-  </select>
+            <select
+              id="role-filter"
+              value={roleDraft}
+              onChange={(event) => {
+                const role = event.target.value
 
-  <svg
-    className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
-    viewBox="0 0 20 20"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    aria-hidden="true"
-  >
-    <path d="m5 7.5 5 5 5-5" />
-  </svg>
-</div>
+                if (
+                  role === 'All roles' ||
+                  role === 'Tax Payer' ||
+                  role === 'Tax Advisor' 
+                  
+                ) {
+                  setRoleDraft(role)
+                }
+              }}
+              className="h-10 w-full appearance-none rounded-md border border-[#5B84B1] bg-white px-3 pr-10 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="All roles">All roles</option>
+              <option value="Tax Payer">Tax Payer</option>
+              <option value="Tax Advisor">Tax Advisor</option>
+          
+            </select>
+
+            <svg
+              className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              aria-hidden="true"
+            >
+              <path d="m5 7.5 5 5 5-5" />
+            </svg>
+          </div>
 
           <button
             type="submit"
@@ -217,62 +301,88 @@ export default function UserManagement() {
             </thead>
 
             <tbody>
-              {filteredUsers.map((user) => (
-                <tr
-                  key={user.id}
-                  className="border-t border-slate-100 text-slate-600"
-                >
-                  <td className="px-4 py-4 font-medium text-slate-900">
-                    {user.name}
-                  </td>
-                  <td className="px-4 py-4">{user.email}</td>
-                  <td className="px-4 py-4">{user.role}</td>
-                  <td className="px-4 py-4">
-                    <StatusBadge status={user.status} />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setViewingUser(user)}
-                      className="rounded-md px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-                    >
-                      View
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-  <button
-    type="button"
-    onClick={() => setManagingUser(user)}
-    aria-label={`Manage ${user.name}`}
-    title="Manage user"
-    className="inline-flex rounded p-2 text-slate-800 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-  >
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
-      <path d="M15 5l4 4" />
-    </svg>
-  </button>
-</td>
-                </tr>
-              ))}
-
-              {filteredUsers.length === 0 && (
+              {loading && (
                 <tr>
                   <td
                     colSpan={6}
                     className="px-4 py-8 text-center text-slate-500"
                   >
-                    No users match those filters.
+                    Loading users...
+                  </td>
+                </tr>
+              )}
+
+              {!loading && loadError && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 py-8 text-center text-rose-700"
+                  >
+                    {loadError}
+                  </td>
+                </tr>
+              )}
+
+              {!loading &&
+                !loadError &&
+                filteredUsers.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="border-t border-slate-100 text-slate-600"
+                  >
+                    <td className="px-4 py-4 font-medium text-slate-900">
+                      {user.name}
+                    </td>
+                    <td className="px-4 py-4">{user.email}</td>
+                    <td className="px-4 py-4">{user.role}</td>
+                    <td className="px-4 py-4">
+                      <StatusBadge status={user.status} />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setViewingUser(user)}
+                        className="rounded-md px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                      >
+                        View
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setManagingUser(user)}
+                        aria-label={`Manage ${user.name}`}
+                        title="Manage user"
+                        className="inline-flex rounded p-2 text-slate-800 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                          <path d="M15 5l4 4" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+              {!loading && !loadError && filteredUsers.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-4 py-8 text-center text-slate-500"
+                  >
+                    {users.length === 0
+                      ? 'No users found.'
+                      : 'No users match those filters.'}
                   </td>
                 </tr>
               )}
@@ -345,7 +455,9 @@ export default function UserManagement() {
             <button
               type="button"
               disabled={managingUser.status === 'Deactivated'}
-              onClick={() => updateUserStatus(managingUser.id, 'Deactivated')}
+              onClick={() =>
+                updateUserStatus(managingUser.id, 'Deactivated')
+              }
               className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Deactivate
